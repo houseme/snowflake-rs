@@ -1,6 +1,6 @@
 [package]
 name = "snowflake_me"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["houseme <housemecn@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
