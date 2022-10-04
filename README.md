@@ -23,7 +23,7 @@ A Snowflake ID is composed of
 Add the following to your `Cargo.toml`:
 ```toml
 [dependencies]
-snowflake = "0.0.1"
+snowflake = "0.1"
 ```
 
 ## Quickstart
