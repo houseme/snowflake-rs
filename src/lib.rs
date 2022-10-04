@@ -7,7 +7,7 @@
 //! Add the following to your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! snowflake = "0.1"
+//! rust-snowflake-rs = "0.1"
 //! ```
 //!
 //! Use the library like this:
@@ -44,7 +44,7 @@
 //!
 //! [houseme/snowflake]: https://github.com/houseme/snowflake
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
-#![doc(html_root_url = "https://docs.rs/sonyflake/*")]
+#![doc(html_root_url = "https://docs.rs/rust-snowflake-rs/*")]
 
 mod builder;
 mod error;
