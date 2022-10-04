@@ -1,0 +1,26 @@
+[package]
+name = "snowflake-rs"
+version = "0.0.1"
+authors = ["houseme <housemecn@gmail.com>"]
+license = "MIT/Apache-2.0"
+description = "A distributed unique ID generator inspired by Twitter's Snowflake"
+homepage = "https://github.com/houseme/snowflake-rs"
+repository = "https://github.com/houseme/snowflake-rs"
+readme = "README.md"
+keywords = ["snowflake", "random", "id", "generator","distributed-id", "speediness", "uniqueness", "auto-increment"]
+categories = ["development-tools", "data-structures", "algorithms"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4.22"
+thiserror = "1.0.35"
+pnet_datalink = "0.31.0"
+
+[dev-dependencies]
+bencher = "0.1.5"
+
+[[bench]]
+name = "bench"
+harness = false

@@ -10,7 +10,7 @@ A distributed unique ID generator inspired by [Twitter's Snowflake](https://blog
 
 This is a Rust implementation of the original [houseme/snowflake](https://github.com/houseme/snowflake), which is written in Go.
 
-A Sonyflake ID is composed of
+A Snowflake ID is composed of
 
 ```
 39 bits for time in units of 10 msec
@@ -23,7 +23,7 @@ A Sonyflake ID is composed of
 Add the following to your `Cargo.toml`:
 ```toml
 [dependencies]
-snowflake-rs = "0.1"
+snowflake-rs = "0.0.1"
 ```
 
 ## Quickstart
@@ -38,8 +38,18 @@ println!("{}", next_id);
 
 ## Benchmarks
 
-Benchmarks were run on a MacBook Pro (16-inch, 2019) with a 2,4GHz i9 and 64 GB memory.
+
 Run them yourself with `cargo bench`.
+
+#### 1、Benchmarks were run on a MacBook Pro (16-inch, 2019) with a 2,4GHz i9 and 64 GB memory.
+
+```
+test bench_decompose ... bench:         651 ns/iter (+/- 251)
+test bench_new       ... bench:     795,722 ns/iter (+/- 371,556)
+test bench_next_id   ... bench:      36,652 ns/iter (+/- 1,105)
+```
+
+#### 2、Benchmarks were run on a MacBook Pro (15-inch, 2017) with a 2,8GHz i7 and 16 GB memory.
 
 ```
 test bench_decompose ... bench:       1,066 ns/iter (+/- 132)
@@ -52,12 +62,10 @@ test bench_next_id   ... bench:      37,390 ns/iter (+/- 499)
 Licensed under either of
 
 * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-* MIT license ([LICENSE-MIT](LICENSE) or http://opensource.org/licenses/MIT)
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
-additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
