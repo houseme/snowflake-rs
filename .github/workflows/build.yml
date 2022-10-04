@@ -3,6 +3,8 @@ name: Build
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - "*"
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
@@ -24,6 +26,7 @@ jobs:
       - name: Install rust
         uses: actions-rs/toolchain@v1
         with:
+          toolchain: stable
           components: rustfmt
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
