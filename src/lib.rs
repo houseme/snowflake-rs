@@ -13,7 +13,7 @@
 //! Use the library like this:
 //!
 //! ```
-//! use snowflake::Snowflake;
+//! use self::snowflake::Snowflake;
 //!
 //! let mut sf = Snowflake::new().unwrap();
 //! let next_id = sf.next_id().unwrap();
@@ -24,7 +24,7 @@
 //!
 //! Snowflake is threadSafe. `clone` it before moving to another thread:
 //! ```
-//! use snowflake::Snowflake;
+//! use self::snowflake::Snowflake;
 //! use std::thread;
 //!
 //! let sf = Snowflake::new().unwrap();
