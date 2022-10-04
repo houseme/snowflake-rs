@@ -1,5 +1,5 @@
 [package]
-name = "rust-snowflake-rs"
+name = "snowflake"
 version = "0.1.2"
 authors = ["houseme <housemecn@gmail.com>"]
 license = "MIT/Apache-2.0"

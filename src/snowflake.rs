@@ -92,19 +92,6 @@ impl Clone for Snowflake {
 
 const SNOWFLAKE_TIME_UNIT: i64 = 10_000_000; // nanoseconds, i.e. 10msec
 
-/// Returns the current elapsed time since the start time in units of 10 msec.
-///
-/// # Arguments
-///
-/// * `time`:
-///
-/// returns: i64
-///
-/// # Examples
-///
-/// ```
-///
-/// ```
 pub(crate) fn to_snowflake_time(time: DateTime<Utc>) -> i64 {
     time.timestamp_nanos() / SNOWFLAKE_TIME_UNIT
 }

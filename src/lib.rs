@@ -7,7 +7,7 @@
 //! Add the following to your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! snowflake = "*"
+//! snowflake = "0.1"
 //! ```
 //!
 //! Use the library like this:
@@ -52,6 +52,6 @@ mod snowflake;
 #[cfg(test)]
 mod tests;
 
+pub use crate::snowflake::*;
 pub use builder::*;
 pub use error::*;
-pub use snowflake::*;
