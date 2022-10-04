@@ -7,7 +7,7 @@
 //! Add the following to your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! rust-snowflake-rs = "0.1"
+//! rust-snowflake-rs = "*"
 //! ```
 //!
 //! Use the library like this:
