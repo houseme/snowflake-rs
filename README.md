@@ -2,9 +2,9 @@
 A simple to use rust package to generate or parse Twitter snowflake IDs,generate time sortable 64 bits unique ids for distributed systems (inspired from twitter snowflake)
 
 [![Build](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
-[![crates.io](https://img.shields.io/crates/v/sonyflake.svg)](https://crates.io/crates/sonyflake)
-[![docs.rs](https://docs.rs/sonyflake/badge.svg)](https://docs.rs/sonyflake/)
-[![License](https://img.shields.io/crates/l/sonyflake)](LICENSE-APACHE)
+[![crates.io](https://img.shields.io/crates/v/snowflake.svg)](https://crates.io/crates/snowflake_me)
+[![docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me/)
+[![License](https://img.shields.io/crates/l/snowflake_me)](LICENSE-APACHE)
 
 A distributed unique ID generator inspired by [Twitter's Snowflake](https://blog.twitter.com/2010/announcing-snowflake).
 
@@ -23,13 +23,13 @@ A Snowflake ID is composed of
 Add the following to your `Cargo.toml`:
 ```toml
 [dependencies]
-snowflake = "0.1"
+snowflake_me = "0.1"
 ```
 
 ## Quickstart
 
 ```rust
-use snowflake::Snowflake;
+use snowflake_me::Snowflake;
 
 let mut sf = Snowflake::new().unwrap();
 let next_id = sf.next_id().unwrap();
