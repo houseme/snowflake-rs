@@ -2,7 +2,7 @@
 A simple to use rust package to generate or parse Twitter snowflake IDs,generate time sortable 64 bits unique ids for distributed systems (inspired from twitter snowflake)
 
 [![Build](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
-[![crates.io](https://img.shields.io/crates/v/snowflake.svg)](https://crates.io/crates/snowflake_me)
+[![crates.io](https://img.shields.io/crates/v/snowflake_me.svg)](https://crates.io/crates/snowflake_me)
 [![docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me/)
 [![License](https://img.shields.io/crates/l/snowflake_me)](LICENSE-APACHE)
 
