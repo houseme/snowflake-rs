@@ -52,6 +52,6 @@ mod snowflake;
 #[cfg(test)]
 mod tests;
 
-pub use crate::snowflake::*;
 pub use builder::*;
 pub use error::*;
+pub use snowflake::*;
