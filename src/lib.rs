@@ -1,3 +1,21 @@
+// Copyright 2022 houseme
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+// #![cfg_attr(test, feature(test))]
+//! A crate for quickly generating unique IDs with guaranteed properties.
+//!
+//! This crate currently includes guaranteed process unique IDs but may include new ID types in the
+//! future.
+//
+// #[cfg(feature = "serde_support")]
+// #[macro_use]
+// extern crate serde_derive;
+
 //! A distributed unique ID generator inspired by [Twitter's Snowflake].
 //!
 //! This is a Rust implementation of the original [houseme/snowflake], which is written in Go.
@@ -7,13 +25,13 @@
 //! Add the following to your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! snowflake = "0.1"
+//! snowflake_me = "0.1"
 //! ```
 //!
 //! Use the library like this:
 //!
 //! ```
-//! use snowflake::Snowflake;
+//! use snowflake_me::Snowflake;
 //!
 //! let mut sf = Snowflake::new().unwrap();
 //! let next_id = sf.next_id().unwrap();
@@ -24,7 +42,7 @@
 //!
 //! Snowflake is threadSafe. `clone` it before moving to another thread:
 //! ```
-//! use snowflake::Snowflake;
+//! use snowflake_me::Snowflake;
 //! use std::thread;
 //!
 //! let sf = Snowflake::new().unwrap();
@@ -55,3 +73,7 @@ mod tests;
 pub use crate::snowflake::*;
 pub use builder::*;
 pub use error::*;
+
+// mod generate;
+
+// pub use crate::generate::ProcessUniqueId;

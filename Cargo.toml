@@ -1,6 +1,6 @@
 [package]
-name = "snowflake"
-version = "0.1.4"
+name = "snowflake_me"
+version = "0.1.5"
 authors = ["houseme <housemecn@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
@@ -17,10 +17,21 @@ edition = "2021"
 chrono = "0.4.22"
 thiserror = "1.0.37"
 pnet_datalink = "0.31.0"
+#serde = { version = "1.0", optional = true }
+#serde_derive = { version = "1.0", optional = true }
 
 [dev-dependencies]
 bencher = "0.1.5"
+#time = "0.1"
+#uuid = { version = "0.7", features = ["v4"] }
+#rand = "0.6"
+#threadpool = "1"
+
+[features]
+#default=[]
 
 [[bench]]
 name = "bench"
 harness = false
+
+#serde_support = ["serde", "serde_derive"]
