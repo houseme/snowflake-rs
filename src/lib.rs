@@ -7,13 +7,13 @@
 //! Add the following to your `Cargo.toml`:
 //! ```toml
 //! [dependencies]
-//! rust-snowflake-rs = "*"
+//! snowflake = "*"
 //! ```
 //!
 //! Use the library like this:
 //!
 //! ```
-//! use self::snowflake::Snowflake;
+//! use snowflake::Snowflake;
 //!
 //! let mut sf = Snowflake::new().unwrap();
 //! let next_id = sf.next_id().unwrap();
@@ -24,7 +24,7 @@
 //!
 //! Snowflake is threadSafe. `clone` it before moving to another thread:
 //! ```
-//! use self::snowflake::Snowflake;
+//! use snowflake::Snowflake;
 //! use std::thread;
 //!
 //! let sf = Snowflake::new().unwrap();
