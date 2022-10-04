@@ -11,7 +11,7 @@ on:
 
 jobs:
   rust_fmt_check:
-    name: Rustfmt check
+    name: RustFmt check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
