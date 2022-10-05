@@ -66,6 +66,7 @@
 
 mod builder;
 mod error;
+mod generate;
 mod snowflake;
 #[cfg(test)]
 mod tests;
