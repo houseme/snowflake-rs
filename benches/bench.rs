@@ -1,5 +1,5 @@
 use bencher::{benchmark_group, benchmark_main, Bencher};
-use snowflake::{decompose, Snowflake};
+use snowflake_me::{decompose, Snowflake};
 
 fn bench_new(b: &mut Bencher) {
     b.iter(|| Snowflake::new());
