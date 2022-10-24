@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
           path: |
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
           path: |
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
           path: |
@@ -83,7 +83,7 @@ jobs:
 #    steps:
 #      - name: Checkout code
 #        # Reference your environment variables
-#        uses: actions/checkout@v2
+#        uses: actions/checkout@v3
 #      - name: Install rust
 #        uses: actions-rs/toolchain@v1
 #      - name: Run cargo login
