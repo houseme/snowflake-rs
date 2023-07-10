@@ -41,7 +41,7 @@ println!("{}", next_id);
 
 Run them yourself with `cargo bench`.
 
-#### 1、Benchmarks were run on a MacBook Pro (16-inch, 2019) with a 2,4GHz i9 and 64 GB memory.
+#### 1, Benchmarks were run on a MacBook Pro (16-inch, 2019) with a 2,4GHz i9 and 64 GB memory.
 
 ```
 test bench_decompose ... bench:         651 ns/iter (+/- 251)
@@ -49,7 +49,7 @@ test bench_new       ... bench:     795,722 ns/iter (+/- 371,556)
 test bench_next_id   ... bench:      36,652 ns/iter (+/- 1,105)
 ```
 
-#### 2、Benchmarks were run on a MacBook Pro (15-inch, 2017) with a 2,8GHz i7 and 16 GB memory.
+#### 2, Benchmarks were run on a MacBook Pro (15-inch, 2017) with a 2,8GHz i7 and 16 GB memory.
 
 ```
 test bench_decompose ... bench:       1,066 ns/iter (+/- 132)
