@@ -12,11 +12,11 @@ This is a Rust implementation of the original [houseme/snowflake](https://github
 
 A Snowflake ID is composed of
 
-```
+
 39 bits for time in units of 10 msec
  8 bits for a sequence number
 16 bits for a machine id
-```
+
 
 ## Install
 
@@ -31,7 +31,7 @@ snowflake_me = "0.1"
 ```rust
 use snowflake_me::Snowflake;
 
-let mut sf = Snowflake::new().unwrap();
+let sf = Snowflake::new().unwrap();
 let next_id = sf.next_id().unwrap();
 println!("{}", next_id);
 ```
@@ -43,7 +43,7 @@ Run them yourself with `cargo bench`.
 
 #### 1, Benchmarks were run on a MacBook Pro (16-inch, 2019) with a 2,4GHz i9 and 64 GB memory.
 
-```
+```benchmark
 test bench_decompose ... bench:         651 ns/iter (+/- 251)
 test bench_new       ... bench:     795,722 ns/iter (+/- 371,556)
 test bench_next_id   ... bench:      36,652 ns/iter (+/- 1,105)
@@ -51,7 +51,7 @@ test bench_next_id   ... bench:      36,652 ns/iter (+/- 1,105)
 
 #### 2, Benchmarks were run on a MacBook Pro (15-inch, 2017) with a 2,8GHz i7 and 16 GB memory.
 
-```
+```benchmark
 test bench_decompose ... bench:       1,066 ns/iter (+/- 132)
 test bench_new       ... bench:     738,129 ns/iter (+/- 318,192)
 test bench_next_id   ... bench:      37,390 ns/iter (+/- 499)

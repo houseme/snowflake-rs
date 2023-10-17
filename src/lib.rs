@@ -8,7 +8,7 @@
 
 //! A distributed unique ID generator inspired by [Twitter's Snowflake].
 //!
-//! This is a Rust implementation of the original [houseme/snowflake], which is written in Go.
+//! This is a Rust implementation of the original [houseme/snowflake-rs], which is written in Go.
 //!
 //! ## Quickstart
 //!
@@ -23,7 +23,7 @@
 //! ```
 //! use snowflake_me::Snowflake;
 //!
-//! let mut sf = Snowflake::new().unwrap();
+//! let sf = Snowflake::new().unwrap();
 //! let next_id = sf.next_id().unwrap();
 //! println!("{}", next_id);
 //! ```
@@ -57,7 +57,6 @@
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]
 pub struct ReadmeDoctests;
-
 mod builder;
 mod error;
 mod snowflake;

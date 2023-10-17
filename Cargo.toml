@@ -1,6 +1,6 @@
 [package]
 name = "snowflake_me"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["houseme <housemecn@gmail.com>"]
 license = "MIT OR Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
@@ -16,14 +16,11 @@ edition = "2021"
 [dependencies]
 chrono = "0.4"
 thiserror = "1"
-pnet_datalink = "0.33.0"
+pnet = "0.34"
 
 
 [dev-dependencies]
 criterion = "0.5"
-
-[features]
-default = []
 
 [[bench]]
 name = "bench"

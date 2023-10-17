@@ -1,8 +1,9 @@
 use crate::error::{BoxDynError, Error};
-use crate::snowflake::{
-    to_snowflake_time, Internals, SharedSnowflake, Snowflake, BIT_LEN_SEQUENCE,
-};
+use crate::snowflake::{to_snowflake_time, Internals, SharedSnowflake, BIT_LEN_SEQUENCE};
+use crate::Snowflake;
+
 use chrono::prelude::*;
+use pnet::datalink;
 use std::{
     net::{IpAddr, Ipv4Addr},
     sync::{Arc, Mutex},
@@ -98,7 +99,7 @@ impl<'a> Builder<'a> {
 }
 
 fn private_ipv4() -> Option<Ipv4Addr> {
-    pnet_datalink::interfaces()
+    datalink::interfaces()
         .iter()
         .filter(|interface| interface.is_up() && !interface.is_loopback())
         .map(|interface| {
