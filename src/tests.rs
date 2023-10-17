@@ -112,7 +112,7 @@ fn test_threads() -> Result<(), BoxDynError> {
 
     let mut children = Vec::new();
     for _ in 0..10 {
-        let mut thread_sf = sf.clone();
+        let thread_sf = sf.clone();
         let thread_tx = tx.clone();
         children.push(thread::spawn(move || {
             for _ in 0..1000 {
