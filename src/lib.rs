@@ -6,16 +6,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-// #![cfg_attr(test, feature(test))]
-//! A crate for quickly generating unique IDs with guaranteed properties.
-//!
-//! This crate currently includes guaranteed process unique IDs but may include new ID types in the
-//! future.
-//
-// #[cfg(feature = "serde_support")]
-// #[macro_use]
-// extern crate serde_derive;
-
 //! A distributed unique ID generator inspired by [Twitter's Snowflake].
 //!
 //! This is a Rust implementation of the original [houseme/snowflake], which is written in Go.
@@ -62,11 +52,14 @@
 //!
 //! [houseme/snowflake]: https://github.com/houseme/snowflake
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
-#![doc(html_root_url = "https://docs.rs/rust-snowflake-rs/*")]
+#![doc(html_root_url = "https://docs.rs/snowflake_me/*")]
+
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+pub struct ReadmeDoctests;
 
 mod builder;
 mod error;
-mod generate;
 mod snowflake;
 #[cfg(test)]
 mod tests;
@@ -74,7 +67,3 @@ mod tests;
 pub use crate::snowflake::*;
 pub use builder::*;
 pub use error::*;
-
-// mod generate;
-
-// pub use crate::generate::ProcessUniqueId;
