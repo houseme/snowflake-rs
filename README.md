@@ -55,7 +55,7 @@ println!("{}", next_id);
 ```rust 
 use snowflake_me::Snowflake;
 
-let sf = Snowflake::builder().machine_id(1).finalize().unwrap();
+let sf = Snowflake::builder().machine_id( & | | Ok(42)).finalize().unwrap();
 let next_id = sf.next_id().unwrap();
 println!("{}", next_id);
 ``` 
@@ -65,7 +65,7 @@ println!("{}", next_id);
 ```rust
 use snowflake_me::Snowflake;
 
-let sf = Snowflake::builder().data_center_id(1).finalize().unwrap();
+let sf = Snowflake::builder().data_center_id( & | | Ok(42)).finalize().unwrap();
 let next_id = sf.next_id().unwrap();
 println!("{}", next_id);
 ```
@@ -73,13 +73,13 @@ println!("{}", next_id);
 ### Resolve ID
 
 ```rust
-use snowflake_me::Snowflake;
+use snowflake_me::{decompose, Snowflake};
 
 let sf = Snowflake::new().unwrap();
 let next_id = sf.next_id().unwrap();
 
-let (_, _, timestamp, sequence,data_center_id, machine_id) = sf.decompose(next_id);
-println!("timestamp: {}, machine_id: {}, sequence: {}", timestamp, machine_id, sequence);
+let parts = decompose(next_id);
+println!("timestamp: {}, machine_id: {}, sequence: {}, data_center_id:{}", parts.time, parts.machine_id, parts.sequence, parts.data_center_id);
 ```
 
 ## Benchmarks
