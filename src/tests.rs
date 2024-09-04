@@ -58,8 +58,6 @@ fn test_run_for_10s() -> Result<(), BoxDynError> {
     let mut max_sequence: u64 = 0;
 
     let machine_id = lower_8_bit_private_ip()? as u64;
-    println!("machine_id: {}", machine_id);
-
     let initial = to_snowflake_time(Utc::now());
     let mut current = initial.clone();
     while current - initial < 1000 {

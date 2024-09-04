@@ -1,5 +1,7 @@
 use crate::builder::Builder;
 use crate::error::*;
+use base64::engine::general_purpose;
+use base64::Engine;
 use chrono::prelude::*;
 use std::{
     sync::{Arc, Mutex},
@@ -87,8 +89,8 @@ impl Snowflake {
 
         Ok((internals.elapsed_time as u64)
             << (BIT_LEN_SEQUENCE + BIT_LEN_MACHINE_ID + BIT_LEN_DATA_CENTER_ID)
-            | (self.0.data_center_id as u64) << (BIT_LEN_SEQUENCE + BIT_LEN_MACHINE_ID)
-            | (internals.sequence as u64) << BIT_LEN_MACHINE_ID
+            | (internals.sequence as u64) << (BIT_LEN_MACHINE_ID + BIT_LEN_DATA_CENTER_ID)
+            | (self.0.data_center_id as u64) << BIT_LEN_MACHINE_ID
             | (self.0.machine_id as u64))
     }
 }
@@ -136,15 +138,99 @@ impl DecomposedSnowflake {
     pub fn nanos_time(&self) -> i64 {
         (self.time as i64) * SNOWFLAKE_TIME_UNIT
     }
+
+    /// Returns the timestamp in milliseconds since the epoch.
+    pub fn int64(&self) -> i64 {
+        self.id as i64
+    }
+
+    /// Returns the string representation of the Snowflake ID.
+    pub fn string(&self) -> String {
+        self.id.to_string()
+    }
+
+    /// Returns the base2 encoded string.
+    pub fn base2(&self) -> String {
+        format!("{:b}", self.id)
+    }
+
+    /// Returns the base32 encoded string.
+    pub fn base32(&self) -> String {
+        const ENCODE_BASE32_MAP: &str = "ybndrfg8ejkmcpqxot1uwisza345h769";
+        let mut id = self.id;
+        if id < 32 {
+            return ENCODE_BASE32_MAP
+                .chars()
+                .nth(id as usize)
+                .unwrap()
+                .to_string();
+        }
+
+        let mut b = Vec::new();
+        while id >= 32 {
+            b.push(ENCODE_BASE32_MAP.chars().nth((id % 32) as usize).unwrap());
+            id /= 32;
+        }
+        b.push(ENCODE_BASE32_MAP.chars().nth(id as usize).unwrap());
+
+        b.reverse();
+        b.into_iter().collect()
+    }
+
+    /// Returns the base36 encoded string.
+    pub fn base36(&self) -> String {
+        format!("{:x}", self.id)
+    }
+
+    /// Returns the base58 encoded string.
+    pub fn base58(&self) -> String {
+        const ENCODE_BASE58_MAP: &str =
+            "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+        let mut id = self.id;
+        if id < 58 {
+            return ENCODE_BASE58_MAP
+                .chars()
+                .nth(id as usize)
+                .unwrap()
+                .to_string();
+        }
+
+        let mut b = Vec::new();
+        while id >= 58 {
+            b.push(ENCODE_BASE58_MAP.chars().nth((id % 58) as usize).unwrap());
+            id /= 58;
+        }
+        b.push(ENCODE_BASE58_MAP.chars().nth(id as usize).unwrap());
+
+        b.reverse();
+        b.into_iter().collect()
+    }
+
+    /// Returns the base64 encoded string.
+    pub fn base64(&self) -> String {
+        general_purpose::STANDARD.encode(self.id.to_be_bytes())
+    }
+    /// Returns the bytes of the Snowflake ID.
+    pub fn bytes(&self) -> Vec<u8> {
+        self.id.to_string().into_bytes()
+    }
+    /// Returns the bytes of the Snowflake ID.
+    pub fn int_bytes(&self) -> [u8; 8] {
+        self.id.to_be_bytes()
+    }
+    /// Returns the timestamp in seconds since the epoch.
+    pub fn time(&self) -> i64 {
+        self.time as i64
+    }
 }
 
 /// The mask to decompose Snowflake ID.
 const DECOMPOSE_MASK_SEQUENCE: u64 =
-    ((1 << BIT_LEN_SEQUENCE) - 1) << (BIT_LEN_MACHINE_ID + BIT_LEN_DATA_CENTER_ID);
-/// The mask for machine ID.
-const MASK_MACHINE_ID: u64 = (1 << BIT_LEN_MACHINE_ID) - 1;
+    ((1 << BIT_LEN_SEQUENCE) - 1) << (BIT_LEN_DATA_CENTER_ID + BIT_LEN_MACHINE_ID);
 /// The mask for data center ID.
 const MASK_DATA_CENTER_ID: u64 = ((1 << BIT_LEN_DATA_CENTER_ID) - 1) << BIT_LEN_MACHINE_ID;
+/// The mask for machine ID.
+const MASK_MACHINE_ID: u64 = (1 << BIT_LEN_MACHINE_ID) - 1;
 
 /// Break a Snowflake ID up into its parts.
 pub fn decompose(id: u64) -> DecomposedSnowflake {

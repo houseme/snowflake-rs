@@ -17,6 +17,7 @@ edition = "2021"
 chrono = { version = "0.4", default-features = false, features = ["now"] }
 thiserror = "1"
 pnet_datalink = { version = "0.35", default-features = false }
+base64 = "0.22.1"
 
 
 [dev-dependencies]
