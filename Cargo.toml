@@ -1,11 +1,12 @@
 [package]
 name = "snowflake_me"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["houseme <housemecn@gmail.com>"]
 license = "MIT OR Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
 homepage = "https://github.com/houseme/snowflake-rs"
 repository = "https://github.com/houseme/snowflake-rs"
+documentation = "https://docs.rs/snowflake_me/"
 readme = "README.md"
 keywords = ["snowflake", "random", "id", "generator", "uniqueness"]
 categories = ["development-tools", "data-structures", "algorithms"]
