@@ -1,5 +1,7 @@
 # snowflake-rs
-A simple to use rust package to generate or parse Twitter snowflake IDs,generate time sortable 64 bits unique ids for distributed systems (inspired from twitter snowflake)
+
+A simple to use rust package to generate or parse Twitter snowflake IDs, generate time sortable 64-bit unique ids for
+distributed systems (inspired from twitter snowflake)
 
 [![Build](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
 [![crates.io](https://img.shields.io/crates/v/snowflake_me.svg)](https://crates.io/crates/snowflake_me)
@@ -8,22 +10,23 @@ A simple to use rust package to generate or parse Twitter snowflake IDs,generate
 
 A distributed unique ID generator inspired by [Twitter's Snowflake](https://blog.twitter.com/2010/announcing-snowflake).
 
-This is a Rust implementation of the original [houseme/snowflake](https://github.com/houseme/snowflake), which is written in Go.
+This is a Rust implementation of the original [houseme/snowflake](https://github.com/houseme/snowflake), which is
+written in Go.
 
 A Snowflake ID is composed of
 
-
 39 bits for time in units of 10 msec
- 8 bits for a sequence number
-16 bits for a machine id
-
+8 bits for a sequence number
+8 bits for a data center id
+8 bits for a machine id
 
 ## Install
 
 Add the following to your `Cargo.toml`:
+
 ```toml
 [dependencies]
-snowflake_me = "0.1"
+snowflake_me = "0.2"
 ```
 
 ## Quickstart
@@ -36,8 +39,50 @@ let next_id = sf.next_id().unwrap();
 println!("{}", next_id);
 ```
 
-## Benchmarks
+### Customize the start time
 
+```rust
+use snowflake_me::Snowflake;
+use chrono::prelude::*;
+
+let sf = Snowflake::builder().start_time(Utc::now()).finalize().unwrap();
+let next_id = sf.next_id().unwrap();
+println!("{}", next_id);
+```
+
+### Customize the machine ID
+
+```rust 
+use snowflake_me::Snowflake;
+
+let sf = Snowflake::builder().machine_id(1).finalize().unwrap();
+let next_id = sf.next_id().unwrap();
+println!("{}", next_id);
+``` 
+
+### Customize the datacenter ID
+
+```rust
+use snowflake_me::Snowflake;
+
+let sf = Snowflake::builder().data_center_id(1).finalize().unwrap();
+let next_id = sf.next_id().unwrap();
+println!("{}", next_id);
+```
+
+### Resolve ID
+
+```rust
+use snowflake_me::Snowflake;
+
+let sf = Snowflake::new().unwrap();
+let next_id = sf.next_id().unwrap();
+
+let (_, _, timestamp, sequence,data_center_id, machine_id) = sf.decompose(next_id);
+println!("timestamp: {}, machine_id: {}, sequence: {}", timestamp, machine_id, sequence);
+```
+
+## Benchmarks
 
 Run them yourself with `cargo bench`.
 
@@ -68,4 +113,5 @@ at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as
+defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

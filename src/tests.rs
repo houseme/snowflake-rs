@@ -1,5 +1,5 @@
 use crate::{
-    builder::lower_16_bit_private_ip,
+    builder::lower_8_bit_private_ip,
     error::*,
     snowflake::{decompose, to_snowflake_time, Snowflake, BIT_LEN_SEQUENCE, BIT_LEN_TIME},
 };
@@ -41,8 +41,7 @@ fn test_once() -> Result<(), BoxDynError> {
     if actual_time < sleep_time || actual_time > sleep_time + 1 {
         panic!("Unexpected time {}", actual_time)
     }
-
-    let machine_id = lower_16_bit_private_ip()? as u64;
+    let machine_id = lower_8_bit_private_ip()? as u64;
     let actual_machine_id = parts.machine_id;
     assert_eq!(machine_id, actual_machine_id, "Unexpected machine id");
 
@@ -58,7 +57,8 @@ fn test_run_for_10s() -> Result<(), BoxDynError> {
     let mut last_id: u64 = 0;
     let mut max_sequence: u64 = 0;
 
-    let machine_id = lower_16_bit_private_ip()? as u64;
+    let machine_id = lower_8_bit_private_ip()? as u64;
+    println!("machine_id: {}", machine_id);
 
     let initial = to_snowflake_time(Utc::now());
     let mut current = initial.clone();
@@ -107,10 +107,9 @@ fn test_run_for_10s() -> Result<(), BoxDynError> {
 #[test]
 fn test_threads() -> Result<(), BoxDynError> {
     let sf = Snowflake::new()?;
-
     let (tx, rx): (Sender<u64>, Receiver<u64>) = mpsc::channel();
-
     let mut children = Vec::new();
+
     for _ in 0..10 {
         let thread_sf = sf.clone();
         let thread_tx = tx.clone();

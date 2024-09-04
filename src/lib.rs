@@ -51,6 +51,7 @@
 //! ```
 //!
 //! [houseme/snowflake]: https://github.com/houseme/snowflake
+//! [houseme/snowflake-rs]: https://github.com/houseme/snowflake-rs
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
 #![doc(html_root_url = "https://docs.rs/snowflake_me/*")]
 
@@ -63,6 +64,6 @@ mod snowflake;
 #[cfg(test)]
 mod tests;
 
-pub use crate::snowflake::*;
 pub use builder::*;
 pub use error::*;
+pub use snowflake::*;
