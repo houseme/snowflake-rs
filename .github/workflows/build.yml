@@ -75,24 +75,13 @@ jobs:
       - test
     steps:
       - name: Checkout code
-        # Reference your environment variables
         uses: actions/checkout@v4
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run cargo login
-        uses: actions-rs/cargo@v1
-        with:
-          command: login
-          args: ${{ secrets.CRATES_IO_TOKEN }} --registry crates-io
       - name: Run cargo publish
-        uses: actions-rs/cargo@v1
-        with:
-          command: publish
-          args: --registry crates-io --package polaris-specification --allow-dirty
-#      - name: Run cargo publish
-#        run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
-#        env:
-#          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: cargo publish --registry crates-io --package snowflake_me --allow-dirty
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 #  publish:
 #    name: 'Publish to Cargo'
 #    runs-on: ubuntu-latest
