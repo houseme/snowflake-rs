@@ -1,4 +1,4 @@
-# snowflake-rs
+# Snowflake-rs
 
 A simple to use rust package to generate or parse Twitter snowflake IDs, generate time sortable 64-bit unique ids for
 distributed systems (inspired from twitter snowflake)
@@ -15,10 +15,10 @@ written in Go.
 
 A Snowflake ID is composed of
 
-39 bits for time in units of 10 msec
-8 bits for a sequence number
-8 bits for a data center id
-8 bits for a machine id
+- 39 bits for time in units of 10 msec
+- 8 bits for a sequence number
+- 8 bits for a data center id
+- 8 bits for a machine id
 
 ## Install
 
@@ -106,12 +106,12 @@ test bench_next_id   ... bench:      37,390 ns/iter (+/- 499)
 
 Licensed under either of
 
-* Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-* MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+* Apache License, Version 2.0, [LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0
+* MIT license [LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT
 
 at your option.
 
-### Contribution
+## Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as
 defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
