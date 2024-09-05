@@ -79,8 +79,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run cargo login token
-        run: echo ${{ secrets.CRATES_IO_TOKEN }}
       - name: Run cargo login
         uses: actions-rs/cargo@v1
         with:
