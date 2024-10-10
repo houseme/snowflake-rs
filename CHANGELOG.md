@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2024-10-10
+
+### Added
+
+- Implemented error handling for missing `machine_id` and `data_center_id` when the `ip-fallback` feature is disabled.
+    - The `Builder`'s `finalize` method now returns an error if `machine_id` or
+      `data_center_id` are not provided and the `ip-fallback` feature is not enabled.
+    - This change ensures that users receive clear error messages when necessary identifiers are missing without the fallback mechanism.
+
+### Changed
+
+- Updated the version in `Cargo.toml` to `0.3.0`.
+
+### CI/CD
+
+- Modified GitHub Actions configuration to support running on branches matching `feature/**`.
+    - This update enhances the development workflow by allowing CI runs on feature branches.
+
 ## [0.2.0] - 2024-09-04
 
 ### Added
