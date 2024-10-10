@@ -8,9 +8,6 @@ use std::sync::{Arc, Mutex};
 #[cfg(feature = "ip-fallback")]
 use std::net::{IpAddr, Ipv4Addr};
 
-#[cfg(feature = "ip-fallback")]
-use pnet_datalink;
-
 /// A builder to build a [`Snowflake`] generator.
 ///
 /// [`Snowflake`]: struct.Snowflake.html
