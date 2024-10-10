@@ -1,8 +1,13 @@
 use crate::{
-    builder::lower_8_bit_private_ip,
     error::*,
-    snowflake::{decompose, to_snowflake_time, Snowflake, BIT_LEN_SEQUENCE, BIT_LEN_TIME},
+    snowflake::{Snowflake, BIT_LEN_TIME},
 };
+
+#[cfg(feature = "ip-fallback")]
+use crate::snowflake::{decompose, to_snowflake_time, BIT_LEN_SEQUENCE};
+
+#[cfg(feature = "ip-fallback")]
+use crate::builder::lower_8_bit_private_ip;
 use chrono::prelude::*;
 use std::{
     collections::HashSet,
@@ -24,6 +29,7 @@ fn test_next_id() -> Result<(), BoxDynError> {
 }
 
 #[test]
+#[cfg(feature = "ip-fallback")]
 fn test_once() -> Result<(), BoxDynError> {
     let now = Utc::now();
     let sf = Snowflake::builder().start_time(now).finalize()?;
@@ -49,6 +55,7 @@ fn test_once() -> Result<(), BoxDynError> {
 }
 
 #[test]
+#[cfg(feature = "ip-fallback")]
 fn test_run_for_10s() -> Result<(), BoxDynError> {
     let now = Utc::now();
     let start_time = to_snowflake_time(now);

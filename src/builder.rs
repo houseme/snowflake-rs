@@ -3,10 +3,13 @@ use crate::snowflake::{to_snowflake_time, Internals, SharedSnowflake, BIT_LEN_SE
 use crate::Snowflake;
 
 use chrono::prelude::*;
-use std::{
-    net::{IpAddr, Ipv4Addr},
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
+
+#[cfg(feature = "ip-fallback")]
+use std::net::{IpAddr, Ipv4Addr};
+
+#[cfg(feature = "ip-fallback")]
+use pnet_datalink;
 
 /// A builder to build a [`Snowflake`] generator.
 ///
@@ -30,12 +33,26 @@ impl<'a> Builder<'a> {
     ///
     /// [`Snowflake`]: struct.Snowflake.html
     pub fn new() -> Self {
-        Self {
-            start_time: None,
-            machine_id: None,
-            data_center_id: None,
-            check_machine_id: None,
-            check_data_center_id: None,
+        #[cfg(not(feature = "ip-fallback"))]
+        {
+            Self {
+                start_time: None,
+                machine_id: Some(&|| Ok(0)),
+                data_center_id: Some(&|| Ok(0)),
+                check_machine_id: None,
+                check_data_center_id: None,
+            }
+        }
+
+        #[cfg(feature = "ip-fallback")]
+        {
+            Self {
+                start_time: None,
+                machine_id: None,
+                data_center_id: None,
+                check_machine_id: None,
+                check_data_center_id: None,
+            }
         }
     }
 
@@ -97,7 +114,16 @@ impl<'a> Builder<'a> {
                 Err(e) => return Err(Error::MachineIdFailed(e)),
             }
         } else {
-            lower_8_bit_private_ip()?
+            #[cfg(feature = "ip-fallback")]
+            {
+                lower_8_bit_private_ip()?
+            }
+            #[cfg(not(feature = "ip-fallback"))]
+            {
+                return Err(Error::MachineIdFailed(
+                    "Machine ID not provided and IP fallback feature is disabled".into(),
+                ));
+            }
         };
 
         if let Some(check_machine_id) = self.check_machine_id {
@@ -112,7 +138,16 @@ impl<'a> Builder<'a> {
                 Err(e) => return Err(Error::MachineIdFailed(e)),
             }
         } else {
-            lower_8_bit_private_ip()?
+            #[cfg(feature = "ip-fallback")]
+            {
+                lower_8_bit_private_ip()?
+            }
+            #[cfg(not(feature = "ip-fallback"))]
+            {
+                return Err(Error::MachineIdFailed(
+                    "Data Center ID not provided and IP fallback feature is disabled".into(),
+                ));
+            }
         };
 
         if let Some(check_data_center_id) = self.check_data_center_id {
@@ -134,6 +169,7 @@ impl<'a> Builder<'a> {
     }
 }
 
+#[cfg(feature = "ip-fallback")]
 fn private_ipv4() -> Option<Ipv4Addr> {
     pnet_datalink::interfaces()
         .iter()
@@ -146,6 +182,7 @@ fn private_ipv4() -> Option<Ipv4Addr> {
         .find(is_private_ipv4)
 }
 
+#[cfg(feature = "ip-fallback")]
 fn is_private_ipv4(ip: &Ipv4Addr) -> bool {
     let octets = ip.octets();
     octets[0] == 10
@@ -154,6 +191,7 @@ fn is_private_ipv4(ip: &Ipv4Addr) -> bool {
 }
 
 #[allow(dead_code)]
+#[cfg(feature = "ip-fallback")]
 pub(crate) fn lower_16_bit_private_ip() -> Result<u16, Error> {
     match private_ipv4() {
         Some(ip) => {
@@ -164,6 +202,7 @@ pub(crate) fn lower_16_bit_private_ip() -> Result<u16, Error> {
     }
 }
 
+#[cfg(feature = "ip-fallback")]
 pub(crate) fn lower_8_bit_private_ip() -> Result<u8, Error> {
     match private_ipv4() {
         Some(ip) => {
