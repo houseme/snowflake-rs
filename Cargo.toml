@@ -1,6 +1,6 @@
 [package]
 name = "snowflake_me"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["houseme <housemecn@gmail.com>"]
 license = "MIT OR Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
@@ -16,7 +16,7 @@ edition = "2021"
 
 [features]
 default = []
-ip-fallback = ["pnet_datalink"]
+ip-fallback = ["dep:pnet_datalink"]
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["now"] }
