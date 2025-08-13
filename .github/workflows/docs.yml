@@ -5,6 +5,9 @@ on:
 
 name: Docs
 
+permissions:
+  contents: read
+
 jobs:
   docs:
     runs-on: ubuntu-latest

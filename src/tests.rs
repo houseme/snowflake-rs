@@ -92,7 +92,7 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
     let initial = to_snowflake_time(Utc::now());
     let mut current = initial;
     while current - initial < 1000 {
-        // 运行 1 秒
+        // Run for 1 second
         let id = sf.next_id()?;
         let parts = DecomposedSnowflake::decompose(
             id,
@@ -112,9 +112,14 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
 
         current = to_snowflake_time(Utc::now());
 
-        let actual_time = parts.time as i64;
-        let overtime = start_time + actual_time - current;
-        assert!(overtime.abs() <= 1, "unexpected overtime: {}", overtime); // 允许 1ms 的抖动
+        let actual_time = parts.time;
+        let expected_time_range = current - start_time;
+        assert!(
+            (actual_time as i64 - expected_time_range).abs() <= 1,
+            "unexpected time difference: actual={}, expected_range={}",
+            actual_time,
+            expected_time_range
+        );
 
         if max_sequence < parts.sequence {
             max_sequence = parts.sequence;

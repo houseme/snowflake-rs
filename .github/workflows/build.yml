@@ -13,6 +13,9 @@ on:
       - main
       - 'feature/**'
 
+permissions:
+  contents: read
+
 jobs:
   rust_fmt_check:
     name: RustFmt check
