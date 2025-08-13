@@ -168,10 +168,10 @@ impl<'a> Builder<'a> {
             }
         };
 
-        if let Some(check_machine_id) = self.check_machine_id {
-            if !check_machine_id(machine_id) {
-                return Err(Error::CheckMachineIdFailed);
-            }
+        if let Some(check_machine_id) = self.check_machine_id
+            && !check_machine_id(machine_id)
+        {
+            return Err(Error::CheckMachineIdFailed);
         }
 
         let data_center_id = if let Some(data_center_id_fn) = self.data_center_id {
@@ -179,7 +179,7 @@ impl<'a> Builder<'a> {
         } else {
             #[cfg(feature = "ip-fallback")]
             {
-                0 // Default to 0 if not provided and ip-fallback is enabled
+                lower_8_bit_private_ip()?.into() // Default to 0 if not provided and ip-fallback is enabled
             }
             #[cfg(not(feature = "ip-fallback"))]
             {
@@ -189,10 +189,10 @@ impl<'a> Builder<'a> {
             }
         };
 
-        if let Some(check_data_center_id) = self.check_data_center_id {
-            if !check_data_center_id(data_center_id) {
-                return Err(Error::CheckDataCenterIdFailed);
-            }
+        if let Some(check_data_center_id) = self.check_data_center_id
+            && !check_data_center_id(data_center_id)
+        {
+            return Err(Error::CheckDataCenterIdFailed);
         }
 
         let shared = Arc::new(SharedSnowflake {
@@ -241,4 +241,16 @@ pub(crate) fn lower_16_bit_private_ip() -> Result<u16, Error> {
             ((octets[2] as u16) << 8) + (octets[3] as u16)
         })
         .ok_or(Error::NoPrivateIPv4)
+}
+
+#[cfg(feature = "ip-fallback")]
+#[allow(dead_code)]
+pub(crate) fn lower_8_bit_private_ip() -> Result<u8, Error> {
+    match private_ipv4() {
+        Some(ip) => {
+            let octets = ip.octets();
+            Ok(octets[3])
+        }
+        None => Err(Error::NoPrivateIPv4),
+    }
 }

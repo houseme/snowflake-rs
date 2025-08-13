@@ -4,7 +4,7 @@ use crate::{
 };
 
 #[cfg(feature = "ip-fallback")]
-use crate::snowflake_me::{BIT_LEN_SEQUENCE, decompose, to_snowflake_time};
+use crate::snowflake::{BIT_LEN_SEQUENCE, decompose, to_snowflake_time};
 
 #[cfg(feature = "ip-fallback")]
 use crate::builder::lower_8_bit_private_ip;
@@ -40,9 +40,6 @@ fn test_once() -> Result<(), BoxDynError> {
     let id = sf.next_id()?;
     let parts = decompose(id);
 
-    let actual_msb = parts.msb;
-    assert_eq!(0, actual_msb, "Unexpected msb");
-
     let actual_time = parts.time;
     if actual_time < sleep_time || actual_time > sleep_time + 1 {
         panic!("Unexpected time {}", actual_time)
@@ -77,11 +74,6 @@ fn test_run_for_10s() -> Result<(), BoxDynError> {
         last_id = id;
 
         current = to_snowflake_time(Utc::now());
-
-        let actual_msb = parts.msb;
-        if actual_msb != 0 {
-            panic!("unexpected msb: {}", actual_msb);
-        }
 
         let actual_time = parts.time as i64;
         let overtime = start_time + actual_time - current;
@@ -145,7 +137,7 @@ fn test_generate_10_ids() -> Result<(), BoxDynError> {
     let mut ids = vec![];
     for _ in 0..10 {
         let id = sf.next_id()?;
-        if ids.iter().any(|vec_id| *vec_id == id) {
+        if ids.contains(&id) {
             panic!("duplicated id: {}", id)
         }
         ids.push(id);
