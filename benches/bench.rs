@@ -1,9 +1,9 @@
-use criterion::{criterion_group, criterion_main, Criterion};
-use snowflake_me::{decompose, Snowflake};
+use criterion::{Criterion, criterion_group, criterion_main};
+use snowflake_me::{Snowflake, decompose};
 
 fn bench_new(c: &mut Criterion) {
     c.bench_function("bench_unique_id_threaded", |b| {
-        b.iter(|| Snowflake::new());
+        b.iter(Snowflake::new);
     });
 }
 

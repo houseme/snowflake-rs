@@ -1,10 +1,10 @@
 use crate::{
     error::*,
-    snowflake::{Snowflake, BIT_LEN_TIME},
+    snowflake::{BIT_LEN_TIME, Snowflake},
 };
 
 #[cfg(feature = "ip-fallback")]
-use crate::snowflake::{decompose, to_snowflake_time, BIT_LEN_SEQUENCE};
+use crate::snowflake_me::{BIT_LEN_SEQUENCE, decompose, to_snowflake_time};
 
 #[cfg(feature = "ip-fallback")]
 use crate::builder::lower_8_bit_private_ip;
@@ -66,7 +66,7 @@ fn test_run_for_10s() -> Result<(), BoxDynError> {
 
     let machine_id = lower_8_bit_private_ip()? as u64;
     let initial = to_snowflake_time(Utc::now());
-    let mut current = initial.clone();
+    let mut current = initial;
     while current - initial < 1000 {
         let id = sf.next_id()?;
         let parts = decompose(id);
@@ -145,7 +145,7 @@ fn test_generate_10_ids() -> Result<(), BoxDynError> {
     let mut ids = vec![];
     for _ in 0..10 {
         let id = sf.next_id()?;
-        if ids.iter().find(|vec_id| **vec_id == id).is_some() {
+        if ids.iter().any(|vec_id| *vec_id == id) {
             panic!("duplicated id: {}", id)
         }
         ids.push(id);
