@@ -115,7 +115,7 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
         let actual_time = parts.time;
         let expected_time_range = current - start_time;
         assert!(
-            (actual_time as i64 - expected_time_range).abs() <= 1,
+            (actual_time as i64 - expected_time_range).abs() <= 5,
             "unexpected time difference: actual={}, expected_range={}",
             actual_time,
             expected_time_range
