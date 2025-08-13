@@ -12,8 +12,6 @@ keywords = ["snowflake", "random", "id", "generator", "uniqueness"]
 categories = ["development-tools", "data-structures", "algorithms"]
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [features]
 default = []
 ip-fallback = ["dep:pnet_datalink"]
@@ -24,9 +22,9 @@ thiserror = "2.0.14"
 pnet_datalink = { version = "0.35.0", default-features = false, optional = true }
 base64 = "0.22.1"
 
-
 [dev-dependencies]
 criterion = "0.7.0"
+num_cpus = "1.17.0"
 
 [[bench]]
 name = "bench"
