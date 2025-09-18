@@ -1,12 +1,17 @@
+// Copyright 2022 houseme
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
 use crate::Snowflake;
 use crate::error::{BoxDynError, Error};
 use crate::snowflake::{SharedSnowflake, to_snowflake_time};
 use chrono::prelude::*;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
-
-#[cfg(feature = "ip-fallback")]
-use std::net::{IpAddr, Ipv4Addr};
 
 /// A builder for building the ['Snowflake'] generator.
 ///
@@ -250,19 +255,19 @@ fn get_ids_from_ip() -> Option<(u16, u16)> {
 }
 
 #[cfg(feature = "ip-fallback")]
-fn private_ipv4() -> Option<Ipv4Addr> {
+fn private_ipv4() -> Option<std::net::Ipv4Addr> {
     pnet_datalink::interfaces()
         .iter()
         .filter(|iface| iface.is_up() && !iface.is_loopback() && !iface.ips.is_empty())
         .flat_map(|iface| iface.ips.iter())
         .find_map(|network| match network.ip() {
-            IpAddr::V4(ipv4) if is_private_ipv4(&ipv4) => Some(ipv4),
+            std::net::IpAddr::V4(ipv4) if is_private_ipv4(&ipv4) => Some(ipv4),
             _ => None,
         })
 }
 
 #[cfg(feature = "ip-fallback")]
-fn is_private_ipv4(ip: &Ipv4Addr) -> bool {
+fn is_private_ipv4(ip: &std::net::Ipv4Addr) -> bool {
     let octets = ip.octets();
     matches!(octets[0], 10)
         || (octets[0] == 172 && (16..=31).contains(&octets[1]))
@@ -276,7 +281,7 @@ fn private_ipv6() -> Option<std::net::Ipv6Addr> {
         .filter(|iface| iface.is_up() && !iface.is_loopback() && !iface.ips.is_empty())
         .flat_map(|iface| iface.ips.iter())
         .find_map(|network| match network.ip() {
-            IpAddr::V6(ipv6) if is_private_ipv6(&ipv6) => Some(ipv6),
+            std::net::IpAddr::V6(ipv6) if is_private_ipv6(&ipv6) => Some(ipv6),
             _ => None,
         })
 }

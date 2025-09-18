@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-09-19
+
+### added
+
+- Correct the version in `Cargo.toml` to `0.5.0`.
+- Update `README.md` and `README_CN.md` to reflect the new version `0.5.0`.
+- Change the crate name from `snowflake_me` to `snowflake-me`.
+- Update all examples in `README.md` and `README_CN.md` to use the new crate name `snowflake-me`.
+- Update the documentation links in `README.md` and `README_CN.md` to point to `snowflake-me`.
+
+## [0.4.1] - 2025-09-18
+
+### Fixed
+
+- modify README.md crate name from `snowflake-me` to `snowflake_me`
+
 ## [0.4.0] - 2025-08-13
 
 ### Added
