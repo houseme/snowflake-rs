@@ -2,8 +2,8 @@
 
 [English](README.md) | 简体中文
 
-[![Crates.io](https://img.shields.io/crates/v/snowflake-me.svg)](https://crates.io/crates/snowflake-me)
-[![Docs.rs](https://docs.rs/snowflake-me/badge.svg)](https://docs.rs/snowflake-me)
+[![Crates.io](https://img.shields.io/crates/v/snowflake_me.svg)](https://crates.io/crates/snowflake_me)
+[![Docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me)
 [![Build Status](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
 [![License](https://img.shields.io/crates/l/snowflake_me)](LICENSE-APACHE)
 
@@ -52,14 +52,14 @@
 
 ```toml
 [dependencies]
-snowflake-me = "0.4.0" # 请使用最新版本
+snowflake_me = "0.4.0" # 请使用最新版本
 ```
 
 如果需要 IP 地址自动回退功能，请启用 `ip-fallback` 特性：
 
 ```toml
 [dependencies]
-snowflake-me = { version = "0.4.0", features = ["ip-fallback"] }
+snowflake_me = { version = "0.4.0", features = ["ip-fallback"] }
 ```
 
 ### 2. 基本用法
