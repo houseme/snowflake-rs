@@ -470,7 +470,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "snowflake-me"
+name = "snowflake_me"
 version = "0.5.0"
 dependencies = [
  "base64",

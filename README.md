@@ -3,7 +3,7 @@
 English | [简体中文](README_CN.md)
 
 [![Crates.io](https://img.shields.io/crates/v/snowflake-me.svg)](https://crates.io/crates/snowflake-me)
-[![Docs.rs](https://docs.rs/snowflake-me/badge.svg)](https://docs.rs/snowflake-me)
+[![Docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me)
 [![Build](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
 [![License](https://img.shields.io/crates/l/snowflake-me)](LICENSE-APACHE)
 
