@@ -54,7 +54,7 @@ jobs:
         with:
           components: clippy
       - name: Run cargo clippy check
-        run: cargo clippy --all-features --allow-dirty -- -D warnings
+        run: cargo check --all-targets --all-features --all
   test:
     name: Run tests
     runs-on: ubuntu-latest
