@@ -2,10 +2,10 @@
 
 English | [简体中文](README_CN.md)
 
-[![Crates.io](https://img.shields.io/crates/v/snowflake_me.svg)](https://crates.io/crates/snowflake_me)
-[![Docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me)
+[![Crates.io](https://img.shields.io/crates/v/snowflake-me.svg)](https://crates.io/crates/snowflake-me)
+[![Docs.rs](https://docs.rs/snowflake-me/badge.svg)](https://docs.rs/snowflake-me)
 [![Build](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
-[![License](https://img.shields.io/crates/l/snowflake_me)](LICENSE-APACHE)
+[![License](https://img.shields.io/crates/l/snowflake-me)](LICENSE-APACHE)
 
 A high-performance, highly concurrent, distributed Snowflake ID generator in Rust.
 
@@ -60,14 +60,14 @@ Add this library to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-snowflake_me = "0.4.0" # Please use the latest version
+snowflake-me = "0.4.0" # Please use the latest version
 ```
 
 To enable the IP address fallback feature, enable the `ip-fallback` feature:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "0.4.0", features = ["ip-fallback"] }
+snowflake-me = { version = "0.4.0", features = ["ip-fallback"] }
 ```
 
 ### 2. Basic Usage
