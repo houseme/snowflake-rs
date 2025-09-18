@@ -86,6 +86,6 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
       - name: Run cargo publish
-        run: cargo publish --registry crates-io --package snowflake_me --allow-dirty
+        run: cargo publish --registry crates-io --package snowflake-me --allow-dirty
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
