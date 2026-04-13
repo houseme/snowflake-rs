@@ -23,7 +23,7 @@ pnet_datalink = { version = "0.35.0", default-features = false, optional = true 
 base64 = "0.22.1"
 
 [dev-dependencies]
-criterion = "0.7.0"
+criterion = "0.8.2"
 num_cpus = "1.17.0"
 
 [[bench]]
