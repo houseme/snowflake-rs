@@ -6,16 +6,21 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#[cfg(feature = "std")]
 use chrono::{DateTime, Utc};
-use std::error::Error as StdError;
 use thiserror::Error;
 
+extern crate alloc;
+use alloc::boxed::Box;
+use alloc::string::String;
+
 /// Convenience type alias for usage within Snowflake.
-pub(crate) type BoxDynError = Box<dyn StdError + 'static + Send + Sync>;
+pub(crate) type BoxDynError = Box<dyn core::error::Error + 'static + Send + Sync>;
 
 /// The error type for this crate.
 #[derive(Error, Debug)]
 pub enum Error {
+    #[cfg(feature = "std")]
     #[error("start_time `{0}` is ahead of current time")]
     StartTimeAheadOfCurrentTime(DateTime<Utc>),
     #[error("machine_id returned an error: {0}")]

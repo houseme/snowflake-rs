@@ -61,7 +61,7 @@ Add this library to your `Cargo.toml`:
 > The dependency name has been changed from 'snowflake_me' to 'snowflake-me' in version '0.5.0'.
 > Please use the new name in your `Cargo.toml`:
 > ```toml
-> snowflake-me = "0.8.0"
+> snowflake-me = "0.9.0"
 > ```
 > No Rust code changes are required; only update the dependency name in `Cargo.toml`.
 
@@ -70,7 +70,7 @@ Add this library to your `Cargo.toml`:
 
 > ```toml
 > [dependencies]
-> snowflake-me = { version = "0.8.0", features = ["ip-fallback"] }
+> snowflake-me = { version = "0.9.0", features = ["ip-fallback"] }
 > ```
 
 ### Feature Flags

@@ -27,7 +27,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! snowflake-me = { version = "0.8.0", features = ["ip-fallback"] }
+//! snowflake-me = { version = "0.9.0", features = ["ip-fallback"] }
 //! ```
 //!
 //! ### 2. Basic Usage
@@ -150,6 +150,7 @@ pub mod clock;
 mod error;
 pub mod id;
 mod snowflake;
+pub(crate) mod time;
 
 #[cfg(test)]
 mod tests;
@@ -161,3 +162,5 @@ pub use id::SnowflakeId;
 #[cfg(feature = "serde")]
 pub use id::SnowflakeIdString;
 pub use snowflake::{DecomposedSnowflake, Snowflake};
+#[cfg(not(feature = "std"))]
+pub use time::set_time_source;

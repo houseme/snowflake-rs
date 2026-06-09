@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-09
+
+### Added
+
+- **Expanded benchmark suite** (`benches/bench.rs`): 7 Criterion benchmarks covering single-thread ID generation, concurrent generation, builder finalization, decompose, encoding methods, and CAS strategy comparison.
+- **`use-strong-cas` feature flag**: switches CAS from `compare_exchange_weak` to `compare_exchange` for environments where spurious CAS failures are undesirable.
+- **`next_ids(count)` batch API**: generates multiple unique IDs in a single call, amortizing overhead.
+- **`no_std` support**: the crate now works in `no_std` + `alloc` environments.
+  - `std` feature (default-enabled) gates `chrono` and `thiserror/std`.
+  - Time source abstraction in `src/time.rs`: `current_millis()` uses `chrono` for std, `AtomicI64` for no_std.
+  - `set_time_source(millis)` public API for no_std environments to provide the current time.
+  - All internal imports use `core::` and `alloc::` for no_std compatibility.
+- **Cache-line alignment**: `SharedSnowflake` is now `#[repr(align(64))]` with hot/cold field ordering to prevent false sharing between threads.
+
+### Changed
+
+- **Feature flag refactor**: `chrono` is now an optional dependency gated behind the `std` feature.
+- `thiserror` and `base64` use `default-features = false` for no_std compatibility.
+- `Builder` fields reordered: hot-path fields grouped separately from cold configuration.
+
 ## [0.8.0] - 2026-06-09
 
 ### Added

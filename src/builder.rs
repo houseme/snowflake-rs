@@ -9,16 +9,25 @@
 use crate::Snowflake;
 use crate::clock::ClockDriftStrategy;
 use crate::error::{BoxDynError, Error};
-use crate::snowflake::{SharedSnowflake, to_snowflake_time};
-use chrono::prelude::*;
-use std::sync::Arc;
-use std::sync::atomic::AtomicU64;
+use crate::snowflake::SharedSnowflake;
+use core::sync::atomic::AtomicU64;
+
+extern crate alloc;
+use alloc::sync::Arc;
+
+#[cfg(feature = "std")]
+use crate::snowflake::to_snowflake_time;
+#[cfg(feature = "std")]
+use chrono::{TimeZone, Utc};
 
 /// A builder for constructing the [`Snowflake`] generator.
 ///
 /// Use [`Snowflake::builder()`] to create an instance.
 pub struct Builder<'a> {
-    start_time: Option<DateTime<Utc>>,
+    #[cfg(feature = "std")]
+    start_time: Option<chrono::DateTime<chrono::Utc>>,
+    #[cfg(not(feature = "std"))]
+    start_time: Option<i64>,
     machine_id: Option<&'a dyn Fn() -> Result<u16, BoxDynError>>,
     data_center_id: Option<&'a dyn Fn() -> Result<u16, BoxDynError>>,
     check_machine_id: Option<&'a dyn Fn(u16) -> bool>,
@@ -59,8 +68,19 @@ impl<'a> Builder<'a> {
     /// Set the start time.
     ///
     /// If the time is set later than the current time, [`Builder::finalize`] will fail.
+    #[cfg(feature = "std")]
     #[must_use]
-    pub fn start_time(mut self, start_time: DateTime<Utc>) -> Self {
+    pub fn start_time(mut self, start_time: chrono::DateTime<chrono::Utc>) -> Self {
+        self.start_time = Some(start_time);
+        self
+    }
+
+    /// Set the start time in milliseconds since Unix epoch.
+    ///
+    /// For `no_std` environments where `chrono` is not available.
+    #[cfg(not(feature = "std"))]
+    #[must_use]
+    pub fn start_time(mut self, start_time: i64) -> Self {
         self.start_time = Some(start_time);
         self
     }
@@ -170,14 +190,23 @@ impl<'a> Builder<'a> {
             ));
         }
 
+        #[cfg(feature = "std")]
         let start_time = if let Some(start_time) = self.start_time {
             if start_time > Utc::now() {
                 return Err(Error::StartTimeAheadOfCurrentTime(start_time));
             }
             to_snowflake_time(start_time)
         } else {
-            // Default start time
+            // Default start time: 2022-01-01 00:00:00 UTC
             to_snowflake_time(Utc.with_ymd_and_hms(2022, 1, 1, 0, 0, 0).unwrap())
+        };
+
+        #[cfg(not(feature = "std"))]
+        let start_time = if let Some(start_time) = self.start_time {
+            start_time
+        } else {
+            // Default start time: 2022-01-01 00:00:00 UTC in milliseconds since epoch
+            1_640_995_200_000
         };
 
         #[cfg(feature = "ip-fallback")]

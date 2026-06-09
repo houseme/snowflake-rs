@@ -10,9 +10,12 @@ use crate::builder::Builder;
 use crate::clock::ClockDriftStrategy;
 use crate::error::*;
 use crate::id::SnowflakeId;
-use chrono::prelude::*;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use crate::time;
+use core::sync::atomic::{AtomicU64, Ordering};
+
+extern crate alloc;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
 
 /// Shared state and configuration for the [`Snowflake`] generator.
 ///
@@ -157,8 +160,7 @@ impl Snowflake {
                                 )
                                 .is_ok()
                         };
-                        if cas_ok
-                        {
+                        if cas_ok {
                             let id = (last_time
                                 << (self.0.bit_len_data_center_id
                                     + self.0.bit_len_machine_id
@@ -225,8 +227,7 @@ impl Snowflake {
                     )
                     .is_ok()
             };
-            if cas_ok
-            {
+            if cas_ok {
                 let id = (next_time
                     << (self.0.bit_len_data_center_id
                         + self.0.bit_len_machine_id
@@ -291,19 +292,21 @@ impl Clone for Snowflake {
 /// Microseconds per millisecond, used to convert nanoseconds to milliseconds.
 const MICROS_PER_MILLI: i64 = 1_000_000;
 
-pub(crate) fn to_snowflake_time(time: DateTime<Utc>) -> i64 {
+/// Convert a `DateTime<Utc>` to snowflake time in milliseconds.
+#[cfg(feature = "std")]
+pub(crate) fn to_snowflake_time(time: chrono::DateTime<chrono::Utc>) -> i64 {
     time.timestamp_nanos_opt().unwrap_or(0) / MICROS_PER_MILLI
 }
 
 fn current_elapsed_time(start_time: i64) -> i64 {
-    to_snowflake_time(Utc::now()) - start_time
+    time::current_millis() - start_time
 }
 
 fn til_next_millis(last_timestamp: i64) {
-    let mut now = to_snowflake_time(Utc::now());
+    let mut now = time::current_millis();
     while now <= last_timestamp {
-        std::hint::spin_loop();
-        now = to_snowflake_time(Utc::now());
+        core::hint::spin_loop();
+        now = time::current_millis();
     }
 }
 
@@ -441,8 +444,8 @@ impl DecomposedSnowflake {
     }
 }
 
-impl std::fmt::Display for DecomposedSnowflake {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for DecomposedSnowflake {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
             "id={}, time={}, data_center={}, machine={}, seq={}",

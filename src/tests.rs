@@ -647,3 +647,34 @@ fn bench_multi_thread_throughput() -> Result<(), BoxDynError> {
 
     Ok(())
 }
+
+// --- no_std verification ---
+//
+// The crate must compile with `--no-default-features` (verified by CI).
+// `cargo test` itself requires std, so these tests exercise the shared code paths
+// that work in both std and no_std modes.
+
+#[test]
+fn test_time_source_abstraction() {
+    // Verify that the time module's current_millis works (std path)
+    let t1 = crate::time::current_millis();
+    std::thread::sleep(Duration::from_millis(10));
+    let t2 = crate::time::current_millis();
+    assert!(t2 >= t1, "time should not go backward");
+}
+
+#[test]
+fn test_snowflake_id_core_traits() {
+    // Verify core trait implementations that must work without std
+    let id = SnowflakeId::new(12345);
+    assert_eq!(id.as_u64(), 12345);
+    assert_eq!(format!("{id}"), "12345");
+    assert_eq!(id.int64(), 12345i64);
+
+    let id2 = SnowflakeId::new(12345);
+    assert_eq!(id, id2);
+    assert_eq!(id, 12345u64);
+
+    let id3 = SnowflakeId::new(99999);
+    assert!(id < id3);
+}

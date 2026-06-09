@@ -27,10 +27,10 @@ fn get_snapshotter() -> &'static Snapshotter {
 fn counter_value(name: &str) -> Option<u64> {
     let snapshot = get_snapshotter().snapshot().into_vec();
     for (ck, _, _, value) in snapshot {
-        if ck.key().name() == name {
-            if let DebugValue::Counter(val) = value {
-                return Some(val);
-            }
+        if ck.key().name() == name
+            && let DebugValue::Counter(val) = value
+        {
+            return Some(val);
         }
     }
     None
@@ -39,10 +39,10 @@ fn counter_value(name: &str) -> Option<u64> {
 fn gauge_value(name: &str) -> Option<f64> {
     let snapshot = get_snapshotter().snapshot().into_vec();
     for (ck, _, _, value) in snapshot {
-        if ck.key().name() == name {
-            if let DebugValue::Gauge(val) = value {
-                return Some(val.into_inner());
-            }
+        if ck.key().name() == name
+            && let DebugValue::Gauge(val) = value
+        {
+            return Some(val.into_inner());
         }
     }
     None

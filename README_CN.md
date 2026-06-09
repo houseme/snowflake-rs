@@ -54,7 +54,7 @@
 > 依赖名称在`0.5.0`版本已由 `snowflake_me` 更改为 `snowflake-me`。  
 > 请在 `Cargo.toml` 中使用新的名称：
 > ```toml
-> snowflake-me = "0.8.0" # 请使用最新版本
+> snowflake-me = "0.9.0" # 请使用最新版本
 > ```
 > 无需修改任何 Rust 代码，仅需更新 `Cargo.toml` 里的依赖名称。
 
@@ -62,7 +62,7 @@
 
 > ```toml
 > [dependencies]
-> snowflake-me = { version = "0.8.0", features = ["ip-fallback"] }
+> snowflake-me = { version = "0.9.0", features = ["ip-fallback"] }
 > ```
 
 ### 特性标志

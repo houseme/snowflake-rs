@@ -10,7 +10,7 @@ use base64::Engine;
 use base64::engine::general_purpose;
 use core::fmt;
 use core::ops::Deref;
-use std::str::FromStr;
+use core::str::FromStr;
 
 use crate::error::Error;
 
@@ -178,19 +178,19 @@ impl Deref for SnowflakeId {
 }
 
 impl Ord for SnowflakeId {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         self.0.cmp(&other.0)
     }
 }
 
 impl PartialOrd for SnowflakeId {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl PartialOrd<u64> for SnowflakeId {
-    fn partial_cmp(&self, other: &u64) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &u64) -> Option<core::cmp::Ordering> {
         self.0.partial_cmp(other)
     }
 }
