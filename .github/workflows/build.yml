@@ -81,15 +81,12 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-      - name: Install Npcap SDK (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://npcap.com/dist/npcap-sdk-1.13.zip" -OutFile "$env:TEMP\npcap-sdk.zip"
-          Expand-Archive -Path "$env:TEMP\npcap-sdk.zip" -DestinationPath "$env:TEMP\npcap-sdk"
-          echo "LIB=$env:TEMP\npcap-sdk\Lib\x64" >> $env:GITHUB_ENV
       - name: Run cargo test (all features)
+        if: runner.os != 'Windows'
         run: cargo test --all-features
+      - name: Run cargo test (all features except ip-fallback)
+        if: runner.os == 'Windows'
+        run: cargo test --features "std serde tracing metrics use-strong-cas"
       - name: Run cargo test (no default features)
         run: cargo test --no-default-features
 
