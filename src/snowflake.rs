@@ -7,6 +7,7 @@
 // except according to those terms.
 
 use crate::builder::Builder;
+use crate::clock::ClockDriftStrategy;
 use crate::error::*;
 use crate::id::SnowflakeId;
 use chrono::prelude::*;
@@ -33,6 +34,10 @@ pub struct SharedSnowflake {
     pub(crate) bit_len_data_center_id: u8,
     /// Bit length of the machine ID section.
     pub(crate) bit_len_machine_id: u8,
+    /// Strategy for handling backward clock drift.
+    pub(crate) clock_drift_strategy: ClockDriftStrategy,
+    /// Maximum allowed clock drift in milliseconds (for `Wait` strategy).
+    pub(crate) max_clock_drift_ms: Option<i64>,
 }
 
 /// A high-performance, distributed, unique ID generator.

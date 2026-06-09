@@ -7,6 +7,7 @@
 // except according to those terms.
 
 use crate::Snowflake;
+use crate::clock::ClockDriftStrategy;
 use crate::error::{BoxDynError, Error};
 use crate::snowflake::{SharedSnowflake, to_snowflake_time};
 use chrono::prelude::*;
@@ -26,6 +27,8 @@ pub struct Builder<'a> {
     bit_len_sequence: u8,
     bit_len_data_center_id: u8,
     bit_len_machine_id: u8,
+    clock_drift_strategy: ClockDriftStrategy,
+    max_clock_drift_ms: Option<i64>,
 }
 
 impl Default for Builder<'_> {
@@ -48,6 +51,8 @@ impl<'a> Builder<'a> {
             bit_len_sequence: 12,
             bit_len_data_center_id: 5,
             bit_len_machine_id: 5,
+            clock_drift_strategy: ClockDriftStrategy::default(),
+            max_clock_drift_ms: None,
         }
     }
 
@@ -124,6 +129,26 @@ impl<'a> Builder<'a> {
     #[must_use]
     pub fn bit_len_machine_id(mut self, bit_len_machine_id: u8) -> Self {
         self.bit_len_machine_id = bit_len_machine_id;
+        self
+    }
+
+    /// Set the strategy for handling backward clock drift.
+    ///
+    /// Defaults to [`ClockDriftStrategy::Wait`].
+    #[must_use]
+    pub fn clock_drift_strategy(mut self, strategy: ClockDriftStrategy) -> Self {
+        self.clock_drift_strategy = strategy;
+        self
+    }
+
+    /// Set the maximum allowed clock drift in milliseconds.
+    ///
+    /// When using [`ClockDriftStrategy::Wait`], if the drift exceeds this limit,
+    /// [`Error::ClockDriftExceeded`] is returned instead of waiting indefinitely.
+    /// Only effective with the `Wait` strategy.
+    #[must_use]
+    pub fn max_clock_drift_ms(mut self, ms: i64) -> Self {
+        self.max_clock_drift_ms = Some(ms);
         self
     }
 
@@ -232,6 +257,8 @@ impl<'a> Builder<'a> {
             bit_len_sequence: self.bit_len_sequence,
             bit_len_data_center_id: self.bit_len_data_center_id,
             bit_len_machine_id: self.bit_len_machine_id,
+            clock_drift_strategy: self.clock_drift_strategy,
+            max_clock_drift_ms: self.max_clock_drift_ms,
         });
         Ok(Snowflake::new_inner(shared))
     }
