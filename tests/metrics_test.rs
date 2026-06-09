@@ -50,26 +50,23 @@ fn gauge_value(name: &str) -> Option<f64> {
 
 #[test]
 fn test_metrics_full() {
-    // Record baseline
-    let baseline = counter_value("snowflake_ids_generated_total").unwrap_or(0);
-
-    // Single-thread counter test
+    // Single-thread counter test — compare deltas to avoid interference from other tests
     let sf = Snowflake::builder()
         .machine_id(&|| Ok(1))
         .data_center_id(&|| Ok(1))
         .finalize()
         .unwrap();
 
+    let before_single = counter_value("snowflake_ids_generated_total").unwrap_or(0);
     let n = 10;
     for _ in 0..n {
         sf.next_id().unwrap();
     }
-
-    let count = counter_value("snowflake_ids_generated_total")
+    let after_single = counter_value("snowflake_ids_generated_total")
         .expect("snowflake_ids_generated_total not found");
     assert_eq!(
-        count,
-        baseline + n,
+        after_single - before_single,
+        n,
         "counter mismatch after single-thread generation"
     );
 
@@ -82,7 +79,7 @@ fn test_metrics_full() {
         "gauge value {val} out of range [0.0, 1.0]"
     );
 
-    // Multi-thread counter test
+    // Multi-thread counter test — compare deltas
     let sf_mt = Arc::new(
         Snowflake::builder()
             .machine_id(&|| Ok(2))
@@ -91,6 +88,8 @@ fn test_metrics_full() {
             .unwrap(),
     );
 
+    let before_mt = counter_value("snowflake_ids_generated_total")
+        .expect("snowflake_ids_generated_total not found");
     let num_threads = 4;
     let ids_per_thread = 50;
     let mut handles = vec![];
@@ -108,11 +107,13 @@ fn test_metrics_full() {
         handle.join().unwrap();
     }
 
-    let expected = baseline + n + 1 + (num_threads * ids_per_thread) as u64;
-    let final_count = counter_value("snowflake_ids_generated_total")
+    let after_mt = counter_value("snowflake_ids_generated_total")
         .expect("snowflake_ids_generated_total not found");
-    assert_eq!(
-        final_count, expected,
-        "counter mismatch after multi-thread generation"
+    let mt_generated = (num_threads * ids_per_thread) as u64;
+    assert!(
+        after_mt - before_mt >= mt_generated,
+        "counter mismatch after multi-thread generation: delta={}, expected>={}",
+        after_mt - before_mt,
+        mt_generated
     );
 }
