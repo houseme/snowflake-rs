@@ -127,6 +127,7 @@
 pub struct ReadmeDoctests;
 
 mod builder;
+pub mod clock;
 mod error;
 pub mod id;
 mod snowflake;
@@ -135,6 +136,7 @@ mod snowflake;
 mod tests;
 
 pub use builder::Builder;
+pub use clock::ClockDriftStrategy;
 pub use error::Error;
 pub use id::SnowflakeId;
 #[cfg(feature = "serde")]
