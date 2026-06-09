@@ -238,9 +238,7 @@ impl TryFrom<i64> for SnowflakeId {
 
     fn try_from(value: i64) -> Result<Self, Self::Error> {
         if value < 0 {
-            Err(Error::ParseIdFailed(format!(
-                "negative value: {value}"
-            )))
+            Err(Error::ParseIdFailed(format!("negative value: {value}")))
         } else {
             Ok(SnowflakeId(value as u64))
         }
