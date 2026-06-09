@@ -210,3 +210,50 @@ impl FromStr for SnowflakeId {
             .map_err(|e| Error::ParseIdFailed(e.to_string()))
     }
 }
+
+// --- Serde support ---
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for SnowflakeId {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_u64(self.0)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for SnowflakeId {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = u64::deserialize(deserializer)?;
+        Ok(SnowflakeId(raw))
+    }
+}
+
+/// Wrapper that serializes [`SnowflakeId`] as a decimal string.
+///
+/// Useful for JSON where `u64` may lose precision in JavaScript.
+#[cfg(feature = "serde")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SnowflakeIdString(pub SnowflakeId);
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for SnowflakeIdString {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.0.to_string())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for SnowflakeIdString {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        let id: SnowflakeId = s.parse().map_err(serde::de::Error::custom)?;
+        Ok(SnowflakeIdString(id))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl fmt::Display for SnowflakeIdString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}

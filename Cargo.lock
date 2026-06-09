@@ -558,6 +558,8 @@ dependencies = [
  "criterion",
  "num_cpus",
  "pnet_datalink",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 

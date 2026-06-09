@@ -168,6 +168,7 @@ fn til_next_millis(last_timestamp: i64) {
 /// All components of a decomposed Snowflake ID.
 ///
 /// Created by calling [`Snowflake::decompose`] or [`DecomposedSnowflake::decompose`].
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DecomposedSnowflake {
     /// The Snowflake ID.
     pub id: SnowflakeId,

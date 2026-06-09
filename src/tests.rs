@@ -302,6 +302,47 @@ fn test_snowflake_id_partial_eq_u64() {
     assert_ne!(id, 200u64);
 }
 
+// --- Serde tests ---
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_snowflake_id_roundtrip() {
+    let id = SnowflakeId::new(1_234_567_890_123_456_789);
+    let json = serde_json::to_string(&id).unwrap();
+    assert_eq!(json, "1234567890123456789");
+    let back: SnowflakeId = serde_json::from_str(&json).unwrap();
+    assert_eq!(id, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_snowflake_id_string_roundtrip() {
+    use crate::SnowflakeIdString;
+    let id = SnowflakeIdString(SnowflakeId::new(1_234_567_890_123_456_789));
+    let json = serde_json::to_string(&id).unwrap();
+    assert_eq!(json, "\"1234567890123456789\"");
+    let back: SnowflakeIdString = serde_json::from_str(&json).unwrap();
+    assert_eq!(id, back);
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn test_serde_decomposed_snowflake() {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()
+        .unwrap();
+    let id = sf.next_id().unwrap();
+    let decomposed = sf.decompose(id);
+    let json = serde_json::to_string(&decomposed).unwrap();
+    assert!(json.contains("\"id\""));
+    assert!(json.contains("\"time\""));
+    assert!(json.contains("\"sequence\""));
+    assert!(json.contains("\"data_center_id\""));
+    assert!(json.contains("\"machine_id\""));
+}
+
 // --- Performance Benchmarks ---
 // These tests are ignored by default. Run with `cargo test -- --ignored`.
 

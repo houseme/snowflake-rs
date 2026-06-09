@@ -137,4 +137,6 @@ mod tests;
 pub use builder::Builder;
 pub use error::Error;
 pub use id::SnowflakeId;
+#[cfg(feature = "serde")]
+pub use id::SnowflakeIdString;
 pub use snowflake::{DecomposedSnowflake, Snowflake};
