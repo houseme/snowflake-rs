@@ -507,6 +507,81 @@ fn test_full_features() {
     }
 }
 
+// --- Performance optimization tests ---
+
+#[test]
+fn test_next_ids_uniqueness() -> Result<(), BoxDynError> {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
+
+    let ids = sf.next_ids(10_000)?;
+    assert_eq!(ids.len(), 10_000);
+
+    let set: HashSet<_> = ids.iter().collect();
+    assert_eq!(set.len(), 10_000, "duplicate IDs found in batch");
+
+    Ok(())
+}
+
+#[test]
+fn test_next_ids_empty() -> Result<(), BoxDynError> {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
+
+    let ids = sf.next_ids(0)?;
+    assert!(ids.is_empty());
+
+    Ok(())
+}
+
+#[test]
+fn test_next_ids_concurrent() -> Result<(), BoxDynError> {
+    let sf = Arc::new(
+        Snowflake::builder()
+            .machine_id(&|| Ok(1))
+            .data_center_id(&|| Ok(1))
+            .finalize()?,
+    );
+    let ids = Arc::new(Mutex::new(HashSet::new()));
+    let mut handles = vec![];
+
+    for _ in 0..10 {
+        let sf_clone = Arc::clone(&sf);
+        let ids_clone = Arc::clone(&ids);
+        handles.push(thread::spawn(move || {
+            let batch = sf_clone.next_ids(1000).unwrap();
+            let mut lock = ids_clone.lock().unwrap();
+            for id in batch {
+                assert!(lock.insert(id), "duplicate ID detected: {id}");
+            }
+        }));
+    }
+
+    for h in handles {
+        h.join().unwrap();
+    }
+
+    let final_count = ids.lock().unwrap().len();
+    assert_eq!(final_count, 10_000);
+
+    Ok(())
+}
+
+#[test]
+fn test_cache_line_alignment() {
+    use crate::snowflake::SharedSnowflake;
+    use std::mem::align_of;
+    assert!(
+        align_of::<SharedSnowflake>() >= 64,
+        "SharedSnowflake alignment {} is less than 64",
+        align_of::<SharedSnowflake>()
+    );
+}
+
 // --- Performance Benchmarks ---
 // These tests are ignored by default. Run with `cargo test -- --ignored`.
 
