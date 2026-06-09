@@ -128,6 +128,7 @@ pub struct ReadmeDoctests;
 
 mod builder;
 mod error;
+pub mod id;
 mod snowflake;
 
 #[cfg(test)]
@@ -135,4 +136,5 @@ mod tests;
 
 pub use builder::Builder;
 pub use error::Error;
+pub use id::SnowflakeId;
 pub use snowflake::{DecomposedSnowflake, Snowflake};

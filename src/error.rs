@@ -30,6 +30,8 @@ pub enum Error {
     OverTimeLimit,
     #[error("could not find any private IPv4 or IPv6 address")]
     NoPrivateIP,
+    #[error("failed to parse SnowflakeId: {0}")]
+    ParseIdFailed(String),
     #[error(
         "invalid bit length configuration: time({0}) + sequence({1}) + data_center({2}) + machine({3}) must be 63"
     )]
