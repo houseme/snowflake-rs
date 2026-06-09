@@ -26,5 +26,17 @@ fn bench_next_id(c: &mut Criterion) {
     });
 }
 
-criterion_group!(snowflake_perf, bench_new, bench_next_id);
+fn bench_decompose(c: &mut Criterion) {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()
+        .expect("Could not create Snowflake");
+    let id = sf.next_id().unwrap();
+    c.bench_function("snowflake_decompose", |b| {
+        b.iter(|| sf.decompose(id));
+    });
+}
+
+criterion_group!(snowflake_perf, bench_new, bench_next_id, bench_decompose);
 criterion_main!(snowflake_perf);

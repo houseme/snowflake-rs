@@ -138,32 +138,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 您可以将一个 Snowflake ID 分解回其组成部分，以进行调试或分析。
 
 ```rust
-use snowflake_me::{Snowflake, DecomposedSnowflake};
+use snowflake_me::Snowflake;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 确保使用与生成时相同的位长配置
-    let bit_len_time = 41;
-    let bit_len_sequence = 12;
-    let bit_len_data_center_id = 5;
-    let bit_len_machine_id = 5;
-
     let sf = Snowflake::builder()
-        .bit_len_time(bit_len_time)
-        .bit_len_sequence(bit_len_sequence)
-        .bit_len_data_center_id(bit_len_data_center_id)
-        .bit_len_machine_id(bit_len_machine_id)
         .machine_id(&|| Ok(15))
         .data_center_id(&|| Ok(7))
         .finalize()?;
 
     let id = sf.next_id()?;
-    let decomposed = DecomposedSnowflake::decompose(
-        id,
-        bit_len_time,
-        bit_len_sequence,
-        bit_len_data_center_id,
-        bit_len_machine_id,
-    );
+    let decomposed = sf.decompose(id);
 
     println!("ID: {}", decomposed.id);
     println!("Time: {}", decomposed.time);

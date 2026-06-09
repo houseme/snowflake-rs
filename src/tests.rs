@@ -7,7 +7,7 @@
 // except according to those terms.
 
 use crate::{
-    DecomposedSnowflake,
+    SnowflakeId,
     error::*,
     snowflake::{Snowflake, to_snowflake_time},
 };
@@ -30,12 +30,6 @@ fn test_next_id() -> Result<(), BoxDynError> {
     Ok(())
 }
 
-// Default bit length constant for testing
-const DEFAULT_BIT_LEN_TIME: u8 = 41;
-const DEFAULT_BIT_LEN_SEQUENCE: u8 = 12;
-const DEFAULT_BIT_LEN_DATA_CENTER_ID: u8 = 5;
-const DEFAULT_BIT_LEN_MACHINE_ID: u8 = 5;
-
 #[test]
 fn test_once() -> Result<(), BoxDynError> {
     let now = Utc::now();
@@ -52,13 +46,7 @@ fn test_once() -> Result<(), BoxDynError> {
     thread::sleep(Duration::from_millis(sleep_duration_ms));
 
     let id = sf.next_id()?;
-    let parts = DecomposedSnowflake::decompose(
-        id,
-        DEFAULT_BIT_LEN_TIME,
-        DEFAULT_BIT_LEN_SEQUENCE,
-        DEFAULT_BIT_LEN_DATA_CENTER_ID,
-        DEFAULT_BIT_LEN_MACHINE_ID,
-    );
+    let parts = sf.decompose(id);
 
     let actual_time = parts.time;
     // 允许时间上的微小误差
@@ -93,7 +81,7 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
         .data_center_id(&|| Ok(1))
         .finalize()?;
 
-    let mut last_id: u64 = 0;
+    let mut last_id = SnowflakeId::new(0);
     let mut max_sequence: u64 = 0;
 
     let initial = to_snowflake_time(Utc::now());
@@ -101,13 +89,7 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
     while current - initial < 1000 {
         // Run for 1 second
         let id = sf.next_id()?;
-        let parts = DecomposedSnowflake::decompose(
-            id,
-            DEFAULT_BIT_LEN_TIME,
-            DEFAULT_BIT_LEN_SEQUENCE,
-            DEFAULT_BIT_LEN_DATA_CENTER_ID,
-            DEFAULT_BIT_LEN_MACHINE_ID,
-        );
+        let parts = sf.decompose(id);
 
         assert!(
             id > last_id,
@@ -165,7 +147,7 @@ fn test_threads_uniqueness() -> Result<(), BoxDynError> {
             }
             let mut ids_lock = thread_ids.lock().unwrap();
             for id in local_ids {
-                assert!(ids_lock.insert(id), "Duplicate ID detected: {}", id);
+                assert!(ids_lock.insert(id), "Duplicate ID detected: {id}");
             }
         }));
     }
@@ -193,7 +175,7 @@ fn test_generate_10_ids() -> Result<(), BoxDynError> {
     let mut ids = HashSet::new();
     for _ in 0..10 {
         let id = sf.next_id()?;
-        assert!(ids.insert(id), "duplicated id: {}", id);
+        assert!(ids.insert(id), "duplicated id: {id}");
     }
     Ok(())
 }
@@ -259,6 +241,65 @@ fn test_over_time_limit() -> Result<(), BoxDynError> {
 
     assert!(matches!(sf.next_id(), Err(Error::OverTimeLimit)));
     Ok(())
+}
+
+// --- SnowflakeId trait tests ---
+
+#[test]
+fn test_snowflake_id_display() {
+    let id = SnowflakeId::new(12345);
+    assert_eq!(id.to_string(), "12345");
+}
+
+#[test]
+fn test_snowflake_id_from_u64() {
+    let id: SnowflakeId = 12345u64.into();
+    assert_eq!(id.as_u64(), 12345);
+    let raw: u64 = id.into();
+    assert_eq!(raw, 12345);
+}
+
+#[test]
+fn test_snowflake_id_from_str() {
+    let id: SnowflakeId = "12345".parse().unwrap();
+    assert_eq!(id.as_u64(), 12345);
+
+    let err = "not_a_number".parse::<SnowflakeId>();
+    assert!(err.is_err());
+}
+
+#[test]
+fn test_snowflake_id_ord() {
+    let id1 = SnowflakeId::new(100);
+    let id2 = SnowflakeId::new(200);
+    assert!(id1 < id2);
+    assert!(id2 > id1);
+    assert_eq!(id1, SnowflakeId::new(100));
+}
+
+#[test]
+fn test_snowflake_id_deref() {
+    let id = SnowflakeId::new(42);
+    assert_eq!(*id, 42u64);
+    // Can use u64 methods via Deref
+    assert_eq!(id.leading_zeros(), 58);
+}
+
+#[test]
+fn test_snowflake_id_encodings() {
+    let id = SnowflakeId::new(255);
+    assert_eq!(id.hex(), "ff");
+    assert_eq!(id.base2(), "11111111");
+    assert_eq!(id.string(), "255");
+    assert_eq!(id.int64(), 255);
+    assert_eq!(id.int_bytes(), [0, 0, 0, 0, 0, 0, 0, 255]);
+}
+
+#[test]
+fn test_snowflake_id_partial_eq_u64() {
+    let id = SnowflakeId::new(100);
+    assert_eq!(id, 100u64);
+    assert_ne!(id, 200u64);
 }
 
 // --- Performance Benchmarks ---

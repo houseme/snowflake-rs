@@ -147,32 +147,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 You can decompose a Snowflake ID back into its components for debugging or analysis.
 
 ```rust
-use snowflake_me::{Snowflake, DecomposedSnowflake};
+use snowflake_me::Snowflake;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Ensure you use the same bit length configuration as when the ID was generated.
-    let bit_len_time = 41;
-    let bit_len_sequence = 12;
-    let bit_len_data_center_id = 5;
-    let bit_len_machine_id = 5;
-
     let sf = Snowflake::builder()
-        .bit_len_time(bit_len_time)
-        .bit_len_sequence(bit_len_sequence)
-        .bit_len_data_center_id(bit_len_data_center_id)
-        .bit_len_machine_id(bit_len_machine_id)
         .machine_id(&|| Ok(15))
         .data_center_id(&|| Ok(7))
         .finalize()?;
 
     let id = sf.next_id()?;
-    let decomposed = DecomposedSnowflake::decompose(
-        id,
-        bit_len_time,
-        bit_len_sequence,
-        bit_len_data_center_id,
-        bit_len_machine_id,
-    );
+    let decomposed = sf.decompose(id);
 
     println!("ID: {}", decomposed.id);
     println!("Time: {}", decomposed.time);
