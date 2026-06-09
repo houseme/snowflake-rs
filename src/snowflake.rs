@@ -213,7 +213,11 @@ impl Snowflake {
                         .set(next_sequence as f64 / sequence_mask as f64);
                 }
                 #[cfg(feature = "tracing")]
-                tracing::trace!(time = next_time, sequence = next_sequence, "snowflake id generated");
+                tracing::trace!(
+                    time = next_time,
+                    sequence = next_sequence,
+                    "snowflake id generated"
+                );
                 return Ok(SnowflakeId::new(id));
             }
             // CAS failure means that another thread has modified its state and the loop will be retried

@@ -7,8 +7,7 @@
 // except according to those terms.
 
 use crate::{
-    ClockDriftStrategy,
-    SnowflakeId,
+    ClockDriftStrategy, SnowflakeId,
     error::*,
     snowflake::{Snowflake, to_snowflake_time},
 };
