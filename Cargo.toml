@@ -34,7 +34,7 @@ criterion = "0.8.2"
 num_cpus = "1.17.0"
 serde_json = "1"
 tracing-subscriber = "0.3"
-metrics-util = "0.19"
+metrics-util = "0.20"
 
 [[bench]]
 name = "bench"
