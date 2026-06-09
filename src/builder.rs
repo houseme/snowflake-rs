@@ -260,6 +260,15 @@ impl<'a> Builder<'a> {
             clock_drift_strategy: self.clock_drift_strategy,
             max_clock_drift_ms: self.max_clock_drift_ms,
         });
+
+        #[cfg(feature = "tracing")]
+        tracing::info!(
+            machine_id,
+            data_center_id,
+            bit_len_time = self.bit_len_time,
+            bit_len_sequence = self.bit_len_sequence,
+            "snowflake generator initialized"
+        );
         Ok(Snowflake::new_inner(shared))
     }
 }

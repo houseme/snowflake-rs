@@ -84,6 +84,9 @@ impl Snowflake {
         let time_shift = self.0.bit_len_sequence;
         let time_max = (1u64 << self.0.bit_len_time) - 1;
 
+        #[cfg(feature = "tracing")]
+        tracing::trace!("generating next snowflake id");
+
         loop {
             let current_state = self.0.state.load(Ordering::Relaxed);
             let last_time = current_state >> time_shift;
@@ -92,6 +95,13 @@ impl Snowflake {
 
             // Clock drift detection: elapsed_time < last_time means clock went backward
             if elapsed_time < last_time {
+                #[cfg(feature = "tracing")]
+                tracing::warn!(
+                    last_time,
+                    current_time = elapsed_time,
+                    strategy = ?self.0.clock_drift_strategy,
+                    "clock drift detected"
+                );
                 match self.0.clock_drift_strategy {
                     ClockDriftStrategy::Wait => {
                         if let Some(max_drift) = self.0.max_clock_drift_ms {
@@ -150,6 +160,8 @@ impl Snowflake {
                 let sequence = (current_state & sequence_mask) + 1;
                 if sequence > sequence_mask {
                     // The serial number has run out, busy waiting until the next millisecond
+                    #[cfg(feature = "tracing")]
+                    tracing::debug!("sequence exhausted, waiting for next millisecond");
                     til_next_millis(self.0.start_time + last_time as i64);
                     continue; // Restart the loop to get a new timestamp
                 }
@@ -160,6 +172,8 @@ impl Snowflake {
             };
 
             if next_time > time_max {
+                #[cfg(feature = "tracing")]
+                tracing::error!(time = next_time, max = time_max, "time limit exceeded");
                 return Err(Error::OverTimeLimit);
             }
 
@@ -188,6 +202,8 @@ impl Snowflake {
                         << (self.0.bit_len_machine_id + self.0.bit_len_sequence))
                     | (u64::from(self.0.machine_id) << self.0.bit_len_sequence)
                     | next_sequence;
+                #[cfg(feature = "tracing")]
+                tracing::trace!(time = next_time, sequence = next_sequence, "snowflake id generated");
                 return Ok(SnowflakeId::new(id));
             }
             // CAS failure means that another thread has modified its state and the loop will be retried
