@@ -61,7 +61,7 @@ Add this library to your `Cargo.toml`:
 > The dependency name has been changed from 'snowflake_me' to 'snowflake-me' in version '0.5.0'.
 > Please use the new name in your `Cargo.toml`:
 > ```toml
-> snowflake-me = "0.6.0"
+> snowflake-me = "0.8.0"
 > ```
 > No Rust code changes are required; only update the dependency name in `Cargo.toml`.
 
@@ -70,8 +70,18 @@ Add this library to your `Cargo.toml`:
 
 > ```toml
 > [dependencies]
-> snowflake-me = { version = "0.6.0", features = ["ip-fallback"] }
+> snowflake-me = { version = "0.8.0", features = ["ip-fallback"] }
 > ```
+
+### Feature Flags
+
+| Feature | Description |
+|---------|-------------|
+| `ip-fallback` | Auto-detect `machine_id` and `data_center_id` from local network interfaces (IPv4/IPv6). |
+| `serde` | Serde `Serialize`/`Deserialize` for `SnowflakeId` (u64) and `SnowflakeIdString` (string). |
+| `tracing` | Structured logging via `tracing` at key points (ID generation, clock drift, etc.). |
+| `metrics` | Counters and gauges via `metrics` crate for observability. |
+| `full` | Enables all optional features at once. |
 
 ### 2. Basic Usage
 

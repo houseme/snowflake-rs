@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-09
+
+### Added
+
+- **Clock drift protection**: `ClockDriftStrategy` enum with three strategies:
+  - `Wait` (default) — busy-wait until clock catches up, with optional `max_clock_drift_ms` limit.
+  - `Error` — return `Error::ClockDrift` immediately on backward drift.
+  - `LastTimestamp` — reuse last known timestamp, IDs remain unique but timestamps become approximate.
+- **Builder methods**: `clock_drift_strategy()` and `max_clock_drift_ms()` for configuring drift behavior.
+- **Error variants**: `Error::ClockDrift { last_time, current_time }` and `Error::ClockDriftExceeded { drift_ms, max_ms }`.
+- **Tracing integration** (optional `tracing` feature): structured logging at key points — ID generation, clock drift, sequence exhaustion, time overflow, generator initialization.
+- **Metrics integration** (optional `metrics` feature): counters and gauges — `snowflake_ids_generated_total`, `snowflake_clock_drift_events_total`, `snowflake_sequence_exhaustion_total`, `snowflake_sequence_utilization`.
+- **`full` feature flag**: enables all optional features (`serde`, `tracing`, `metrics`, `ip-fallback`) at once.
+- Integration tests for tracing (`tests/tracing_test.rs`) and metrics (`tests/metrics_test.rs`).
+
+### Changed
+
+- `SharedSnowflake` now includes `clock_drift_strategy` and `max_clock_drift_ms` fields.
+
 ## [0.7.0] - 2026-06-09
 
 ### Added
@@ -132,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the initial version.
 
+[0.8.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.8.0
 [0.7.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.7.0
 [0.6.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.6.0
 [0.5.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.5.0

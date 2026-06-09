@@ -54,7 +54,7 @@
 > 依赖名称在`0.5.0`版本已由 `snowflake_me` 更改为 `snowflake-me`。  
 > 请在 `Cargo.toml` 中使用新的名称：
 > ```toml
-> snowflake-me = "0.6.0" # 请使用最新版本
+> snowflake-me = "0.8.0" # 请使用最新版本
 > ```
 > 无需修改任何 Rust 代码，仅需更新 `Cargo.toml` 里的依赖名称。
 
@@ -62,8 +62,18 @@
 
 > ```toml
 > [dependencies]
-> snowflake-me = { version = "0.6.0", features = ["ip-fallback"] }
+> snowflake-me = { version = "0.8.0", features = ["ip-fallback"] }
 > ```
+
+### 特性标志
+
+| 特性 | 描述 |
+|------|------|
+| `ip-fallback` | 从本地网络接口（IPv4/IPv6）自动检测 `machine_id` 和 `data_center_id`。 |
+| `serde` | `SnowflakeId`（u64）和 `SnowflakeIdString`（字符串）的 Serde 序列化/反序列化支持。 |
+| `tracing` | 通过 `tracing` 在关键路径（ID 生成、时钟漂移等）输出结构化日志。 |
+| `metrics` | 通过 `metrics` 提供计数器和仪表盘指标，用于可观测性。 |
+| `full` | 一次性启用所有可选特性。 |
 
 ### 2. 基本用法
 

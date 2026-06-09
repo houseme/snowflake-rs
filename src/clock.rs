@@ -16,11 +16,11 @@ pub enum ClockDriftStrategy {
     /// Busy-wait until the clock catches up. Guarantees strict monotonicity.
     ///
     /// This is the default strategy. If `max_clock_drift_ms` is configured and
-    /// the drift exceeds that limit, [`Error::ClockDriftExceeded`] is returned
+    /// the drift exceeds that limit, `Error::ClockDriftExceeded` is returned
     /// instead of waiting indefinitely.
     #[default]
     Wait,
-    /// Return [`Error::ClockDrift`] immediately on backward clock drift.
+    /// Return `Error::ClockDrift` immediately on backward clock drift.
     ///
     /// Use this when the caller prefers to handle clock issues explicitly
     /// rather than blocking.
