@@ -205,9 +205,45 @@ impl FromStr for SnowflakeId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse::<u64>()
-            .map(SnowflakeId)
-            .map_err(|e| Error::ParseIdFailed(e.to_string()))
+        if let Some(hex) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+            u64::from_str_radix(hex, 16)
+                .map(SnowflakeId)
+                .map_err(|e| Error::ParseIdFailed(e.to_string()))
+        } else {
+            s.parse::<u64>()
+                .map(SnowflakeId)
+                .map_err(|e| Error::ParseIdFailed(e.to_string()))
+        }
+    }
+}
+
+impl TryFrom<String> for SnowflakeId {
+    type Error = Error;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        s.parse()
+    }
+}
+
+impl TryFrom<&str> for SnowflakeId {
+    type Error = Error;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        s.parse()
+    }
+}
+
+impl TryFrom<i64> for SnowflakeId {
+    type Error = Error;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        if value < 0 {
+            Err(Error::ParseIdFailed(format!(
+                "negative value: {value}"
+            )))
+        } else {
+            Ok(SnowflakeId(value as u64))
+        }
     }
 }
 

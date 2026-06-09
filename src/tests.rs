@@ -302,6 +302,37 @@ fn test_snowflake_id_partial_eq_u64() {
     assert_ne!(id, 200u64);
 }
 
+#[test]
+fn test_snowflake_id_from_str_hex() {
+    let id1: SnowflakeId = "12345".parse().unwrap();
+    let id2: SnowflakeId = "0x3039".parse().unwrap();
+    assert_eq!(id1, id2);
+    assert_eq!(id1.as_u64(), 12345);
+
+    let id3: SnowflakeId = "0X3039".parse().unwrap();
+    assert_eq!(id1, id3);
+}
+
+#[test]
+fn test_snowflake_id_try_from_string() {
+    let id = SnowflakeId::try_from("12345".to_string()).unwrap();
+    assert_eq!(id.as_u64(), 12345);
+}
+
+#[test]
+fn test_snowflake_id_try_from_str() {
+    let id = SnowflakeId::try_from("0x3039").unwrap();
+    assert_eq!(id.as_u64(), 12345);
+}
+
+#[test]
+fn test_snowflake_id_try_from_i64() {
+    let id = SnowflakeId::try_from(12345i64).unwrap();
+    assert_eq!(id.as_u64(), 12345);
+
+    assert!(SnowflakeId::try_from(-1i64).is_err());
+}
+
 // --- Serde tests ---
 
 #[cfg(feature = "serde")]
