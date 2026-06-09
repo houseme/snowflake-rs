@@ -95,6 +95,8 @@ impl Snowflake {
 
             // Clock drift detection: elapsed_time < last_time means clock went backward
             if elapsed_time < last_time {
+                #[cfg(feature = "metrics")]
+                metrics::counter!("snowflake_clock_drift_events_total").increment(1);
                 #[cfg(feature = "tracing")]
                 tracing::warn!(
                     last_time,
@@ -160,6 +162,8 @@ impl Snowflake {
                 let sequence = (current_state & sequence_mask) + 1;
                 if sequence > sequence_mask {
                     // The serial number has run out, busy waiting until the next millisecond
+                    #[cfg(feature = "metrics")]
+                    metrics::counter!("snowflake_sequence_exhaustion_total").increment(1);
                     #[cfg(feature = "tracing")]
                     tracing::debug!("sequence exhausted, waiting for next millisecond");
                     til_next_millis(self.0.start_time + last_time as i64);
@@ -202,6 +206,12 @@ impl Snowflake {
                         << (self.0.bit_len_machine_id + self.0.bit_len_sequence))
                     | (u64::from(self.0.machine_id) << self.0.bit_len_sequence)
                     | next_sequence;
+                #[cfg(feature = "metrics")]
+                {
+                    metrics::counter!("snowflake_ids_generated_total").increment(1);
+                    metrics::gauge!("snowflake_sequence_utilization")
+                        .set(next_sequence as f64 / sequence_mask as f64);
+                }
                 #[cfg(feature = "tracing")]
                 tracing::trace!(time = next_time, sequence = next_sequence, "snowflake id generated");
                 return Ok(SnowflakeId::new(id));
