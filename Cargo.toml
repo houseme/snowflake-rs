@@ -47,3 +47,7 @@ metrics-util = "0.20.4"
 name = "bench"
 harness = false
 
+[[example]]
+name = "serde_example"
+required-features = ["serde"]
+

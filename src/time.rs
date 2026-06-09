@@ -47,7 +47,7 @@ pub(crate) fn current_millis() -> i64 {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,ignore
 /// // In a timer interrupt handler or main loop:
 /// snowflake_me::set_time_source(get_rtc_millis());
 /// ```

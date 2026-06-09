@@ -7,19 +7,33 @@
 // except according to those terms.
 
 use crate::{
-    ClockDriftStrategy, SnowflakeId,
+    SnowflakeId,
     error::*,
-    snowflake::{Snowflake, to_snowflake_time},
+    snowflake::Snowflake,
 };
+#[cfg(feature = "std")]
+use crate::{
+    ClockDriftStrategy,
+    snowflake::to_snowflake_time,
+};
+#[cfg(feature = "std")]
 use chrono::prelude::*;
 use std::{
-    collections::HashSet,
-    sync::{Arc, Mutex, atomic::Ordering},
+    sync::Arc,
     thread,
-    time::{Duration, Instant},
+    time::Instant,
 };
+#[cfg(feature = "std")]
+use std::time::Duration;
+#[cfg(feature = "std")]
+use std::{
+    collections::HashSet,
+    sync::{Mutex, atomic::Ordering},
+};
+#[cfg(feature = "std")]
 use thiserror::Error;
 
+#[cfg(feature = "std")]
 #[test]
 fn test_next_id() -> Result<(), BoxDynError> {
     let sf = Snowflake::builder()
@@ -30,6 +44,7 @@ fn test_next_id() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_once() -> Result<(), BoxDynError> {
     let now = Utc::now();
@@ -69,6 +84,7 @@ fn test_once() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_run_for_1s() -> Result<(), BoxDynError> {
     let now = Utc::now();
@@ -123,6 +139,7 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_threads_uniqueness() -> Result<(), BoxDynError> {
     let sf = Arc::new(
@@ -165,6 +182,7 @@ fn test_threads_uniqueness() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_generate_10_ids() -> Result<(), BoxDynError> {
     let sf = Snowflake::builder()
@@ -179,12 +197,14 @@ fn test_generate_10_ids() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[derive(Error, Debug)]
 pub enum TestError {
     #[error("some error")]
     SomeError,
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_builder_errors() {
     let start_time = Utc::now() + chrono::Duration::seconds(1);
@@ -220,6 +240,7 @@ fn test_error_send_sync() {
     .unwrap();
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_over_time_limit() -> Result<(), BoxDynError> {
     let bit_len_time = 30;
@@ -375,6 +396,7 @@ fn test_serde_decomposed_snowflake() {
 
 // --- Clock drift tests ---
 
+#[cfg(feature = "std")]
 #[test]
 fn test_clock_drift_error_strategy() -> Result<(), BoxDynError> {
     let sf = Snowflake::builder()
@@ -400,6 +422,7 @@ fn test_clock_drift_error_strategy() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_clock_drift_last_timestamp_strategy() -> Result<(), BoxDynError> {
     let sf = Snowflake::builder()
@@ -430,6 +453,7 @@ fn test_clock_drift_last_timestamp_strategy() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_clock_drift_exceeded() -> Result<(), BoxDynError> {
     let sf = Snowflake::builder()
@@ -462,6 +486,7 @@ fn test_clock_drift_exceeded() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_clock_drift_wait_strategy_normal() -> Result<(), BoxDynError> {
     // Default Wait strategy should work normally when there's no clock drift
@@ -483,6 +508,7 @@ fn test_clock_drift_wait_strategy_normal() -> Result<(), BoxDynError> {
 
 // --- Combined feature test ---
 
+#[cfg(feature = "std")]
 #[test]
 fn test_full_features() {
     let sf = Snowflake::builder()
@@ -509,6 +535,7 @@ fn test_full_features() {
 
 // --- Performance optimization tests ---
 
+#[cfg(feature = "std")]
 #[test]
 fn test_next_ids_uniqueness() -> Result<(), BoxDynError> {
     let sf = Snowflake::builder()
@@ -525,6 +552,7 @@ fn test_next_ids_uniqueness() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_next_ids_empty() -> Result<(), BoxDynError> {
     let sf = Snowflake::builder()
@@ -538,6 +566,7 @@ fn test_next_ids_empty() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn test_next_ids_concurrent() -> Result<(), BoxDynError> {
     let sf = Arc::new(
@@ -654,6 +683,7 @@ fn bench_multi_thread_throughput() -> Result<(), BoxDynError> {
 // `cargo test` itself requires std, so these tests exercise the shared code paths
 // that work in both std and no_std modes.
 
+#[cfg(feature = "std")]
 #[test]
 fn test_time_source_abstraction() {
     // Verify that the time module's current_millis works (std path)

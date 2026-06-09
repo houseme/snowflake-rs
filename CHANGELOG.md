@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `SharedSnowflake` visibility changed from `pub` to `pub(crate)`.
 - Added `#[must_use]` to `Snowflake::builder()`, `Snowflake::decompose()`, `DecomposedSnowflake::decompose()`.
+- **README overhaul**: removed outdated v0.5.0 rename notice, added `no_std` usage guide, batch generation example, migration guide from v0.6.x, complete feature flags table (`std`, `use-strong-cas`).
 
 ## [0.9.0] - 2026-06-09
 

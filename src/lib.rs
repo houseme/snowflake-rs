@@ -96,6 +96,7 @@
 //! For production environments, it is highly recommended to use the `Builder` to manually configure `machine_id` and `data_center_id` for maximum reliability.
 //!
 //! ```rust
+//! # #[cfg(feature = "std")] {
 //! use snowflake_me::Snowflake;
 //! use std::thread;
 //! use std::sync::Arc;
@@ -133,6 +134,7 @@
 //! }
 //!
 //! println!("Successfully generated {} unique IDs.", all_ids.len());
+//! # }
 //! ```
 //!
 //! ## Decomposing an ID
@@ -140,6 +142,7 @@
 //! You can decompose a Snowflake ID back into its original components.
 //!
 //! ```rust
+//! # #[cfg(feature = "std")] {
 //! use snowflake_me::{Snowflake, DecomposedSnowflake};
 //!
 //! // Use the same configuration that was used for generation.
@@ -162,6 +165,7 @@
 //!
 //! assert_eq!(decomposed.machine_id, 15);
 //! assert_eq!(decomposed.data_center_id, 7);
+//! # }
 //! ```
 //!
 //! ## Clock Drift Protection
