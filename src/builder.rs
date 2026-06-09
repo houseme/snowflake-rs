@@ -13,9 +13,9 @@ use chrono::prelude::*;
 use std::sync::Arc;
 use std::sync::atomic::AtomicU64;
 
-/// A builder for building the ['Snowflake'] generator.
+/// A builder for constructing the [`Snowflake`] generator.
 ///
-/// [`Snowflake`]: struct.Snowflake.html
+/// Use [`Snowflake::builder()`] to create an instance.
 pub struct Builder<'a> {
     start_time: Option<DateTime<Utc>>,
     machine_id: Option<&'a dyn Fn() -> Result<u16, BoxDynError>>,
@@ -28,16 +28,15 @@ pub struct Builder<'a> {
     bit_len_machine_id: u8,
 }
 
-impl<'a> Default for Builder<'a> {
+impl Default for Builder<'_> {
     fn default() -> Self {
         Builder::new()
     }
 }
 
 impl<'a> Builder<'a> {
-    /// Construct a new builder for the build of ['Snowflake'].
-    ///
-    /// [`Snowflake`]: struct.Snowflake.html
+    /// Construct a new builder with default configuration.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             start_time: None,
@@ -53,21 +52,27 @@ impl<'a> Builder<'a> {
     }
 
     /// Set the start time.
-    /// If the time is set later than the current time, 'finalize' will fail.
+    ///
+    /// If the time is set later than the current time, [`Builder::finalize`] will fail.
+    #[must_use]
     pub fn start_time(mut self, start_time: DateTime<Utc>) -> Self {
         self.start_time = Some(start_time);
         self
     }
 
     /// Set the machine ID.
-    ///If the provided closure returns an error, 'finalize' will fail。
+    ///
+    /// If the provided closure returns an error, [`Builder::finalize`] will fail.
+    #[must_use]
     pub fn machine_id(mut self, machine_id: &'a dyn Fn() -> Result<u16, BoxDynError>) -> Self {
         self.machine_id = Some(machine_id);
         self
     }
 
-    /// Set up the data center ID.
-    /// If the provided closure returns an error, 'finalize' will fail.
+    /// Set the data center ID.
+    ///
+    /// If the provided closure returns an error, [`Builder::finalize`] will fail.
+    #[must_use]
     pub fn data_center_id(
         mut self,
         data_center_id: &'a dyn Fn() -> Result<u16, BoxDynError>,
@@ -76,46 +81,55 @@ impl<'a> Builder<'a> {
         self
     }
 
-    /// Set up a function to check the machine ID.
-    /// If the function returns 'false', 'finalize' will fail.
+    /// Set a validation function for the machine ID.
+    ///
+    /// If the function returns `false`, [`Builder::finalize`] will fail.
+    #[must_use]
     pub fn check_machine_id(mut self, check_machine_id: &'a dyn Fn(u16) -> bool) -> Self {
         self.check_machine_id = Some(check_machine_id);
         self
     }
 
-    /// Set up a function to check the data center ID.
-    /// If the function returns 'false', 'finalize' will fail.
+    /// Set a validation function for the data center ID.
+    ///
+    /// If the function returns `false`, [`Builder::finalize`] will fail.
+    #[must_use]
     pub fn check_data_center_id(mut self, check_data_center_id: &'a dyn Fn(u16) -> bool) -> Self {
         self.check_data_center_id = Some(check_data_center_id);
         self
     }
 
-    /// Set the bit length of the timestamp section。
+    /// Set the bit length of the timestamp section.
+    #[must_use]
     pub fn bit_len_time(mut self, bit_len_time: u8) -> Self {
         self.bit_len_time = bit_len_time;
         self
     }
 
-    /// Sets the bit length of the serial number section。
+    /// Set the bit length of the sequence number section.
+    #[must_use]
     pub fn bit_len_sequence(mut self, bit_len_sequence: u8) -> Self {
         self.bit_len_sequence = bit_len_sequence;
         self
     }
 
-    /// Set the bit length for the Data Center ID section.
+    /// Set the bit length of the data center ID section.
+    #[must_use]
     pub fn bit_len_data_center_id(mut self, bit_len_data_center_id: u8) -> Self {
         self.bit_len_data_center_id = bit_len_data_center_id;
         self
     }
 
     /// Set the bit length of the machine ID section.
+    #[must_use]
     pub fn bit_len_machine_id(mut self, bit_len_machine_id: u8) -> Self {
         self.bit_len_machine_id = bit_len_machine_id;
         self
     }
 
-    /// Finish building and create a Snowflake instance.
-    /// This method will return an error if any of the configured functions return an error or if validation fails.
+    /// Finish building and create a [`Snowflake`] instance.
+    ///
+    /// Returns an error if validation fails or any configured closure returns an error.
     pub fn finalize(self) -> Result<Snowflake, Error> {
         if self.bit_len_time
             + self.bit_len_sequence
@@ -153,8 +167,8 @@ impl<'a> Builder<'a> {
                 if let Some((_, machine_id)) = ip_derived_ids {
                     machine_id & machine_id_mask
                 } else {
-                    // For compatibility, leave the NoPrivateIPv4 error on hold for now
-                    return Err(Error::NoPrivateIPv4);
+                    // For compatibility, leave the NoPrivateIP error on hold for now
+                    return Err(Error::NoPrivateIP);
                 }
             }
             #[cfg(not(feature = "ip-fallback"))]
@@ -167,11 +181,7 @@ impl<'a> Builder<'a> {
 
         if machine_id > machine_id_mask {
             return Err(Error::MachineIdFailed(
-                format!(
-                    "Machine ID {} is greater than the max allowed value {}",
-                    machine_id, machine_id_mask
-                )
-                .into(),
+                format!("Machine ID {machine_id} is greater than the max allowed value {machine_id_mask}").into(),
             ));
         }
 
@@ -190,7 +200,7 @@ impl<'a> Builder<'a> {
                 if let Some((data_center_id, _)) = ip_derived_ids {
                     data_center_id & data_center_id_mask
                 } else {
-                    return Err(Error::NoPrivateIPv4);
+                    return Err(Error::NoPrivateIP);
                 }
             }
             #[cfg(not(feature = "ip-fallback"))]
@@ -203,11 +213,7 @@ impl<'a> Builder<'a> {
 
         if data_center_id > data_center_id_mask {
             return Err(Error::DataCenterIdFailed(
-                format!(
-                    "Data Center ID {} is greater than the max allowed value {}",
-                    data_center_id, data_center_id_mask
-                )
-                .into(),
+                format!("Data Center ID {data_center_id} is greater than the max allowed value {data_center_id_mask}").into(),
             ));
         }
 

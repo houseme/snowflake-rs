@@ -265,7 +265,7 @@ fn test_over_time_limit() -> Result<(), BoxDynError> {
 // These tests are ignored by default. Run with `cargo test -- --ignored`.
 
 #[test]
-#[ignore]
+#[ignore = "benchmark, run with `cargo test -- --ignored`"]
 fn bench_single_thread_performance() -> Result<(), BoxDynError> {
     let sf = Snowflake::new()?;
     let iterations = 1_000_000;
@@ -290,7 +290,7 @@ fn bench_single_thread_performance() -> Result<(), BoxDynError> {
 }
 
 #[test]
-#[ignore]
+#[ignore = "benchmark, run with `cargo test -- --ignored`"]
 fn bench_multi_thread_throughput() -> Result<(), BoxDynError> {
     let sf = Arc::new(Snowflake::new()?);
     let num_threads = num_cpus::get().max(2); // Use available cores, at least 2

@@ -28,10 +28,8 @@ pub enum Error {
     CheckDataCenterIdFailed,
     #[error("over the time limit")]
     OverTimeLimit,
-    #[error("could not find any private ipv4 address")]
-    NoPrivateIPv4,
-    #[error("mutex is poisoned (i.e. a panic happened while it was locked)")]
-    MutexPoisoned,
+    #[error("could not find any private IPv4 or IPv6 address")]
+    NoPrivateIP,
     #[error(
         "invalid bit length configuration: time({0}) + sequence({1}) + data_center({2}) + machine({3}) must be 63"
     )]

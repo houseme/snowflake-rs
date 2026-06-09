@@ -5,9 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed `base36()` method which was incorrectly returning lowercase hex instead of actual base36 encoding.
+- Fixed `base36()` to now return lowercase hex via `hex()` method; added proper base36 implementation.
+- Fixed incorrect `SNOWFLAKE_TIME_UNIT` comment (was labeled "Nanosecond", now correctly documented as microseconds-per-millisecond).
+- Fixed doc links using quotes instead of backticks in `Builder`.
+- Fixed duplicate benchmark function names in `benches/bench.rs`.
+
+### Changed
+
+- Removed unused `Error::MutexPoisoned` variant (leftover from old Mutex-based design).
+- Renamed `Error::NoPrivateIPv4` to `Error::NoPrivateIP` since the code also attempts IPv6 fallback.
+- Added `#[must_use]` to all `Builder` setter methods.
+- Added `Display` trait implementation for `DecomposedSnowflake`.
+- Added `hex()` method to `DecomposedSnowflake` for lowercase hex encoding.
+- Added `elapsed_millis()` method to replace ambiguous `time()` method.
+- Improved documentation across all modules with consistent formatting and accurate descriptions.
+- Elided unnecessary lifetime in `Default for Builder<'_>`.
+- Added `std::hint::spin_loop()` in `til_next_millis` for better CPU behavior during busy-wait.
+- Benchmarks now use explicit `machine_id`/`data_center_id` instead of relying on `ip-fallback`.
+
 ## [0.5.0] - 2025-09-19
 
-### added
+### Added
 
 - Correct the version in `Cargo.toml` to `0.5.0`.
 - Update `README.md` and `README_CN.md` to reflect the new version `0.5.0`.
@@ -89,5 +112,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the initial version.
 
-[0.1.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.1.5
+[0.1.5]: https://github.com/houseme/snowflake-rs/releases/tag/v0.1.5
 

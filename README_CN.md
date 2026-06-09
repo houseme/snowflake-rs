@@ -71,9 +71,13 @@
 use snowflake_me::Snowflake;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 使用默认配置创建一个生成器
-    // 注意：默认配置需要 `ip-fallback` 特性来自动获取机器 ID 和数据中心 ID
-    let sf = Snowflake::new()?;
+    // 使用 Builder 显式配置机器 ID 和数据中心 ID。
+    // 或者，启用 `ip-fallback` 特性并使用 `Snowflake::new()`
+    // 从本地网络接口自动获取 ID。
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
 
     // 生成一个唯一的 ID
     let id = sf.next_id()?;

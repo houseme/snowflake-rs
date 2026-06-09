@@ -79,9 +79,13 @@ Add this library to your `Cargo.toml`:
 use snowflake_me::Snowflake;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create a generator with the default configuration.
-    // Note: This requires the `ip-fallback` feature to auto-detect machine and data center IDs.
-    let sf = Snowflake::new()?;
+    // Create a generator with explicit machine and data center IDs.
+    // Alternatively, enable the `ip-fallback` feature and use `Snowflake::new()`
+    // to auto-detect IDs from the local network interface.
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
 
     // Generate a unique ID
     let id = sf.next_id()?;
