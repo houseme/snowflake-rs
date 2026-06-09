@@ -171,6 +171,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### 5. Clock Drift Protection
+
+If the system clock moves backward (e.g., due to NTP adjustments), the generator handles it
+based on the configured strategy. By default, it busy-waits until the clock catches up.
+
+```rust
+use snowflake_me::{Snowflake, ClockDriftStrategy};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .clock_drift_strategy(ClockDriftStrategy::Wait)
+        .max_clock_drift_ms(5000)  // fail if drift exceeds 5 seconds
+        .finalize()?;
+
+    let id = sf.next_id()?;
+    println!("Generated ID: {}", id);
+
+    Ok(())
+}
+```
+
+Available strategies:
+- **`ClockDriftStrategy::Wait`** (default) — Busy-wait until the clock catches up. Optionally set `max_clock_drift_ms` to fail if the drift is too large.
+- **`ClockDriftStrategy::Error`** — Return `Error::ClockDrift` immediately on backward drift.
+- **`ClockDriftStrategy::LastTimestamp`** — Reuse the last known timestamp. IDs remain unique but timestamps become approximate.
+
 ## Contributing
 
 Issues and Pull Requests are welcome.

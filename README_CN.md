@@ -162,6 +162,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### 5. 时钟漂移保护
+
+如果系统时钟发生回退（例如 NTP 调整），生成器会根据配置的策略进行处理。默认情况下，会忙等待直到时钟恢复。
+
+```rust
+use snowflake_me::{Snowflake, ClockDriftStrategy};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .clock_drift_strategy(ClockDriftStrategy::Wait)
+        .max_clock_drift_ms(5000)  // 漂移超过 5 秒则报错
+        .finalize()?;
+
+    let id = sf.next_id()?;
+    println!("Generated ID: {}", id);
+
+    Ok(())
+}
+```
+
+可用策略：
+- **`ClockDriftStrategy::Wait`**（默认）— 忙等待直到时钟恢复。可设置 `max_clock_drift_ms` 在漂移过大时返回错误。
+- **`ClockDriftStrategy::Error`** — 检测到时钟回退时立即返回 `Error::ClockDrift`。
+- **`ClockDriftStrategy::LastTimestamp`** — 复用上次已知的时间戳。ID 仍然唯一，但时间戳变为近似值。
+
 ## 贡献
 
 欢迎提交问题（Issues）和拉取请求（Pull Requests）。

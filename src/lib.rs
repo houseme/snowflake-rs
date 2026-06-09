@@ -118,6 +118,25 @@
 //! assert_eq!(decomposed.data_center_id, 7);
 //! ```
 //!
+//! ## Clock Drift Protection
+//!
+//! If the system clock moves backward (e.g., due to NTP adjustments), the generator
+//! can handle it using one of three strategies:
+//!
+//! ```rust
+//! use snowflake_me::{Snowflake, ClockDriftStrategy};
+//!
+//! let sf = Snowflake::builder()
+//!     .machine_id(&|| Ok(1))
+//!     .data_center_id(&|| Ok(1))
+//!     .clock_drift_strategy(ClockDriftStrategy::Wait)
+//!     .max_clock_drift_ms(5000)  // fail if drift > 5 seconds
+//!     .finalize()
+//!     .unwrap();
+//! ```
+//!
+//! See [`ClockDriftStrategy`] for details on each strategy.
+//!
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
 
 #![doc(html_root_url = "https://docs.rs/snowflake-me/*")]
