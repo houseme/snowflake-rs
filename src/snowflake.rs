@@ -136,16 +136,28 @@ impl Snowflake {
                             continue;
                         }
                         let new_state = (last_time << time_shift) | sequence;
-                        if self
-                            .0
-                            .state
-                            .compare_exchange_weak(
-                                current_state,
-                                new_state,
-                                Ordering::AcqRel,
-                                Ordering::Relaxed,
-                            )
-                            .is_ok()
+                        let cas_ok = if cfg!(feature = "use-strong-cas") {
+                            self.0
+                                .state
+                                .compare_exchange(
+                                    current_state,
+                                    new_state,
+                                    Ordering::AcqRel,
+                                    Ordering::Relaxed,
+                                )
+                                .is_ok()
+                        } else {
+                            self.0
+                                .state
+                                .compare_exchange_weak(
+                                    current_state,
+                                    new_state,
+                                    Ordering::AcqRel,
+                                    Ordering::Relaxed,
+                                )
+                                .is_ok()
+                        };
+                        if cas_ok
                         {
                             let id = (last_time
                                 << (self.0.bit_len_data_center_id
@@ -190,18 +202,30 @@ impl Snowflake {
             let new_state = (next_time << time_shift) | next_sequence;
 
             // Use CAS (Compare-And-Swap) to update status atomically
-            // 'compare_exchange_weak' performs better at high concurrency because it allows for spurious failures,
-            // It is safe to use in cycles.
-            if self
-                .0
-                .state
-                .compare_exchange_weak(
-                    current_state,
-                    new_state,
-                    Ordering::AcqRel,
-                    Ordering::Relaxed,
-                )
-                .is_ok()
+            // compare_exchange_weak performs better at high concurrency because it allows spurious failures,
+            // which is safe in retry loops. compare_exchange is stronger but slightly slower.
+            let cas_ok = if cfg!(feature = "use-strong-cas") {
+                self.0
+                    .state
+                    .compare_exchange(
+                        current_state,
+                        new_state,
+                        Ordering::AcqRel,
+                        Ordering::Relaxed,
+                    )
+                    .is_ok()
+            } else {
+                self.0
+                    .state
+                    .compare_exchange_weak(
+                        current_state,
+                        new_state,
+                        Ordering::AcqRel,
+                        Ordering::Relaxed,
+                    )
+                    .is_ok()
+            };
+            if cas_ok
             {
                 let id = (next_time
                     << (self.0.bit_len_data_center_id

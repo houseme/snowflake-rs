@@ -18,6 +18,7 @@ ip-fallback = ["dep:pnet_datalink"]
 serde = ["dep:serde"]
 tracing = ["dep:tracing"]
 metrics = ["dep:metrics"]
+use-strong-cas = []
 full = ["serde", "tracing", "metrics", "ip-fallback"]
 
 [dependencies]

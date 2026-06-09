@@ -92,6 +92,49 @@ fn bench_encodings(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_next_id_cas_strategy(c: &mut Criterion) {
+    let sf = Arc::new(
+        Snowflake::builder()
+            .machine_id(&|| Ok(1))
+            .data_center_id(&|| Ok(1))
+            .finalize()
+            .unwrap(),
+    );
+
+    let label = if cfg!(feature = "use-strong-cas") {
+        "strong_cas"
+    } else {
+        "weak_cas"
+    };
+
+    let mut group = c.benchmark_group("next_id/cas_strategy");
+    for num_threads in [1, 4, 8] {
+        group.throughput(Throughput::Elements(num_threads * 1000));
+        group.bench_with_input(
+            BenchmarkId::new(label, num_threads),
+            &num_threads,
+            |b, &num_threads| {
+                b.iter(|| {
+                    let handles: Vec<_> = (0..num_threads)
+                        .map(|_| {
+                            let sf = Arc::clone(&sf);
+                            std::thread::spawn(move || {
+                                for _ in 0..1000 {
+                                    let _ = sf.next_id();
+                                }
+                            })
+                        })
+                        .collect();
+                    for h in handles {
+                        h.join().unwrap();
+                    }
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
 fn bench_builder_finalize(c: &mut Criterion) {
     c.bench_function("builder/finalize", |b| {
         b.iter(|| {
@@ -108,6 +151,7 @@ criterion_group!(
     bench_new,
     bench_next_id_single,
     bench_next_id_concurrent,
+    bench_next_id_cas_strategy,
     bench_decompose,
     bench_encodings,
     bench_builder_finalize
