@@ -6,23 +6,11 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use crate::{
-    SnowflakeId,
-    error::*,
-    snowflake::Snowflake,
-};
 #[cfg(feature = "std")]
-use crate::{
-    ClockDriftStrategy,
-    snowflake::to_snowflake_time,
-};
+use crate::{ClockDriftStrategy, snowflake::to_snowflake_time};
+use crate::{SnowflakeId, error::*, snowflake::Snowflake};
 #[cfg(feature = "std")]
 use chrono::prelude::*;
-use std::{
-    sync::Arc,
-    thread,
-    time::Instant,
-};
 #[cfg(feature = "std")]
 use std::time::Duration;
 #[cfg(feature = "std")]
@@ -30,6 +18,7 @@ use std::{
     collections::HashSet,
     sync::{Mutex, atomic::Ordering},
 };
+use std::{sync::Arc, thread, time::Instant};
 #[cfg(feature = "std")]
 use thiserror::Error;
 
