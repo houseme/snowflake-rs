@@ -1,6 +1,6 @@
 [package]
 name = "snowflake_me"
-version = "0.9.0"
+version = "1.0.0"
 authors = ["houseme <housemecn@gmail.com> and housemen <houseme@outlook.com>"]
 license = "MIT OR Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
@@ -31,9 +31,14 @@ serde = { version = "1", features = ["derive"], optional = true }
 tracing = { version = "0.1", optional = true }
 metrics = { version = "0.24", optional = true }
 
+[lints.rust]
+missing_docs = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }
+
 [dev-dependencies]
 criterion = "0.8.2"
 num_cpus = "1.17.0"
+proptest = "1"
 serde_json = "1"
 tracing-subscriber = "0.3"
 metrics-util = "0.20.4"

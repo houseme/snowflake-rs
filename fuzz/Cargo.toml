@@ -1,0 +1,32 @@
+[package]
+name = "snowflake_me-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.snowflake_me]
+path = ".."
+
+[[bin]]
+name = "fuzz_decompose"
+path = "fuzz_targets/fuzz_decompose.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_parse_id"
+path = "fuzz_targets/fuzz_parse_id.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fuzz_encodings"
+path = "fuzz_targets/fuzz_encodings.rs"
+test = false
+doc = false

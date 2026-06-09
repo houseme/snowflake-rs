@@ -11,3 +11,4 @@ Cargo.lock
 
 doc/doc.md
 docs/*
+fuzz/target/

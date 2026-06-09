@@ -22,7 +22,7 @@ use alloc::vec::Vec;
 /// Designed to be lock-free for high concurrency performance.
 /// Cache-line aligned to prevent false sharing between threads.
 #[repr(align(64))]
-pub struct SharedSnowflake {
+pub(crate) struct SharedSnowflake {
     // Hot path — written by every next_id() call
     /// Atomic state packing `elapsed_time` (high bits) and `sequence` (low bits).
     pub(crate) state: AtomicU64,
@@ -65,6 +65,7 @@ impl Snowflake {
     }
 
     /// Create a new [`Builder`] to configure a `Snowflake` generator.
+    #[must_use]
     pub fn builder<'a>() -> Builder<'a> {
         Builder::new()
     }
@@ -272,6 +273,7 @@ impl Snowflake {
     }
 
     /// Decompose a Snowflake ID into its constituent parts using the generator's configuration.
+    #[must_use]
     pub fn decompose(&self, id: SnowflakeId) -> DecomposedSnowflake {
         DecomposedSnowflake::decompose(
             id.as_u64(),
@@ -333,6 +335,7 @@ impl DecomposedSnowflake {
     /// # Panics
     ///
     /// Panics if the total bit length does not equal 63.
+    #[must_use]
     pub fn decompose(
         id: u64,
         bit_len_time: u8,

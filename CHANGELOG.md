@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-06-09
+
+### Added
+
+- **API stabilization**: public API frozen for v1.x stability guarantee.
+- **`missing_docs` lint**: all public items now have documentation.
+- **Crate-level documentation**: architecture overview with bit layout diagram, performance characteristics, feature flags table, thread safety notes, `no_std` usage guide.
+- **Property-based tests** (`tests/proptest.rs`): monotonicity, decompose roundtrip, uniqueness under contention.
+- **Fuzz tests** (`fuzz/`): targets for `fuzz_decompose`, `fuzz_parse_id`, `fuzz_encodings`.
+- **Loom concurrency tests** (`tests/loom_test.rs`): concurrent `next_id` and `next_ids` verification.
+- **Example code** (`examples/`): `basic.rs`, `builder.rs`, `concurrent.rs`, `decompose.rs`, `serde_example.rs`.
+- **CI/CD improvements**:
+  - Matrix testing across Linux/macOS/Windows and stable/beta/nightly.
+  - MSRV verification (Rust 1.75).
+  - WASM build check (`wasm32-unknown-unknown`).
+  - Documentation check with `-D warnings`.
+  - Code coverage workflow with `cargo-llvm-cov`.
+
+### Changed
+
+- `SharedSnowflake` visibility changed from `pub` to `pub(crate)`.
+- Added `#[must_use]` to `Snowflake::builder()`, `Snowflake::decompose()`, `DecomposedSnowflake::decompose()`.
+
 ## [0.9.0] - 2026-06-09
 
 ### Added

@@ -6,6 +6,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![allow(missing_docs)]
 #![cfg(feature = "metrics")]
 
 use metrics_util::debugging::{DebugValue, DebuggingRecorder, Snapshotter};

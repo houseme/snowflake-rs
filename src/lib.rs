@@ -18,6 +18,52 @@
 //! - **Smart IP Fallback**: With the `ip-fallback` feature enabled, if `machine_id` or `data_center_id` are not provided, the system automatically derives them from local network interfaces.
 //!     - **Supports both IPv4 and IPv6**: It prioritizes private IPv4 addresses and falls back to private IPv6 addresses.
 //!     - **Conflict-Free**: To ensure uniqueness, `machine_id` and `data_center_id` are derived from distinct parts of the IP address.
+//! - **`no_std` Support**: Works in `no_std` + `alloc` environments with a user-provided time source.
+//!
+//! ## Architecture
+//!
+//! A Snowflake ID is a 64-bit integer composed of four sections:
+//!
+//! ```text
+//! ┌─────────────────────────────────────────────────────────────────┐
+//! │ 0 │ 41 bits: time  │ 5 bits: dc │ 5 bits: machine │ 12 bits: seq │
+//! └─────────────────────────────────────────────────────────────────┘
+//!   ↑                                                                  │
+//!   sign bit (always 0)                                                 │
+//! ```
+//!
+//! - **Time** (41 bits): Milliseconds since the configured start time. Default epoch is 2022-01-01.
+//! - **Data Center ID** (5 bits): Identifies the data center (0–31).
+//! - **Machine ID** (5 bits): Identifies the machine within the data center (0–31).
+//! - **Sequence** (12 bits): Per-millisecond counter (0–4095).
+//!
+//! The bit lengths are fully configurable via [`Builder`], as long as they sum to 63.
+//!
+//! ## Performance
+//!
+//! The generator uses a lock-free CAS (Compare-And-Swap) loop with cache-line aligned state
+//! (`#[repr(align(64))]`) to prevent false sharing between threads. Under contention, it
+//! defaults to `compare_exchange_weak` which allows spurious failures for better throughput
+//! on ARM and other architectures. Enable the `use-strong-cas` feature to use
+//! `compare_exchange` instead.
+//!
+//! ## Thread Safety
+//!
+//! [`Snowflake`] is safe to `Clone` and share across threads. Cloning is a cheap `Arc`
+//! increment — all clones share the same internal state. The [`next_id`](Snowflake::next_id)
+//! method is lock-free and safe to call concurrently from any number of threads.
+//!
+//! ## Feature Flags
+//!
+//! | Feature | Dependencies | Default | Description |
+//! |---------|-------------|---------|-------------|
+//! | `std` | chrono, thiserror/std | Yes | Standard library support (time via chrono) |
+//! | `ip-fallback` | std, pnet_datalink | No | Auto-derive IDs from local IP address |
+//! | `serde` | serde | No | Serde serialization for `SnowflakeId` and `DecomposedSnowflake` |
+//! | `tracing` | tracing | No | Structured logging at key points |
+//! | `metrics` | metrics | No | Runtime counters and gauges |
+//! | `use-strong-cas` | — | No | Use `compare_exchange` instead of `compare_exchange_weak` |
+//! | `full` | all of the above | No | Enable all optional features |
 //!
 //! ## Quick Start
 //!
@@ -27,7 +73,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! snowflake-me = { version = "0.9.0", features = ["ip-fallback"] }
+//! snowflake-me = { version = "1.0", features = ["ip-fallback"] }
 //! ```
 //!
 //! ### 2. Basic Usage
@@ -137,6 +183,23 @@
 //!
 //! See [`ClockDriftStrategy`] for details on each strategy.
 //!
+//! ## `no_std` Usage
+//!
+//! In `no_std` environments, disable default features and provide a time source:
+//!
+//! ```rust,ignore
+//! // In your timer interrupt or main loop:
+//! snowflake_me::set_time_source(current_millis);
+//!
+//! // Then create the generator (start_time must be a raw i64 in milliseconds):
+//! let sf = Snowflake::builder()
+//!     .start_time(1_640_995_200_000) // 2022-01-01 UTC
+//!     .machine_id(&|| Ok(1))
+//!     .data_center_id(&|| Ok(1))
+//!     .finalize()
+//!     .unwrap();
+//! ```
+//!
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
 
 #![doc(html_root_url = "https://docs.rs/snowflake-me/*")]
@@ -146,8 +209,10 @@
 pub struct ReadmeDoctests;
 
 mod builder;
+/// Clock drift handling strategies for backward clock detection.
 pub mod clock;
 mod error;
+/// The [`SnowflakeId`] newtype with encoding methods and trait implementations.
 pub mod id;
 mod snowflake;
 pub(crate) mod time;
