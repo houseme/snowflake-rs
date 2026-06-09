@@ -27,7 +27,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! snowflake-me = { version = "0.5.0", features = ["ip-fallback"] }
+//! snowflake-me = { version = "0.6.0", features = ["ip-fallback"] }
 //! ```
 //!
 //! ### 2. Basic Usage
