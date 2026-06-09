@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-09
+
+### Added
+
+- **`SnowflakeId` newtype**: Introduced `SnowflakeId(u64)` wrapper with rich encoding methods (`hex`, `base2`, `base32`, `base36`, `base58`, `base64`).
+- **Standard trait implementations**: `Display`, `From<u64>`, `Into<u64>`, `AsRef<u64>`, `Deref<Target=u64>`, `Ord`, `PartialOrd`, `FromStr`, `Hash`, `Eq`.
+- **`FromStr` hex parsing**: Supports `0x`/`0X` prefix for hexadecimal input.
+- **`TryFrom` implementations**: `TryFrom<String>`, `TryFrom<&str>`, `TryFrom<i64>`.
+- **Serde support** (optional): `serde` feature flag for `SnowflakeId` (u64 format), `SnowflakeIdString` (string format), and `DecomposedSnowflake`.
+- **`SnowflakeIdString`**: Wrapper type that serializes `SnowflakeId` as a decimal string (for JavaScript-safe JSON).
+- `DecomposedSnowflake::to_id()` method and `From<&DecomposedSnowflake> for SnowflakeId`.
+
+### Changed
+
+- **BREAKING**: `Snowflake::next_id()` now returns `Result<SnowflakeId, Error>` instead of `Result<u64, Error>`.
+- **BREAKING**: `Snowflake::decompose()` now accepts `SnowflakeId` instead of `u64`.
+- **BREAKING**: `DecomposedSnowflake::id` field type changed from `u64` to `SnowflakeId`.
+- Encoding methods on `DecomposedSnowflake` now delegate to `SnowflakeId`.
+- `Error::ParseIdFailed(String)` added for ID parsing failures.
+
 ## [0.6.0] - 2026-06-09
 
 ### Fixed
@@ -112,6 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the initial version.
 
+[0.7.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.7.0
 [0.6.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.6.0
 [0.5.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.5.0
 [0.4.1]: https://github.com/houseme/snowflake-rs/releases/tag/v0.4.1
