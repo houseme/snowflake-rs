@@ -85,6 +85,7 @@ snowflake-me = { version = "1.0", features = ["full"] }
 ### 2. 基本用法
 
 ```rust
+# #[cfg(feature = "std")] {
 use snowflake_me::Snowflake;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -102,6 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+# }
 ```
 
 ### 3. 批量生成
@@ -109,6 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 单次调用生成多个唯一 ID：
 
 ```rust
+# #[cfg(feature = "std")] {
 use snowflake_me::Snowflake;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -122,6 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+# }
 ```
 
 ### 4. 多线程用法
@@ -129,6 +133,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 `Snowflake` 实例可以被高效地克隆并在线程间共享。
 
 ```rust
+# #[cfg(feature = "std")] {
 use snowflake_me::Snowflake;
 use std::thread;
 use std::sync::Arc;
@@ -167,6 +172,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("成功在 10 个线程中生成了 {} 个唯一 ID", all_ids.len());
     Ok(())
 }
+# }
 ```
 
 ### 5. 分解 ID
@@ -174,6 +180,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 您可以将一个 Snowflake ID 分解回其组成部分，以进行调试或分析。
 
 ```rust
+# #[cfg(feature = "std")] {
 use snowflake_me::Snowflake;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -196,6 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+# }
 ```
 
 ### 6. 时钟漂移保护
@@ -203,6 +211,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 如果系统时钟发生回退（例如 NTP 调整），生成器会根据配置的策略进行处理。默认情况下，会忙等待直到时钟恢复。
 
 ```rust
+# #[cfg(feature = "std")] {
 use snowflake_me::{Snowflake, ClockDriftStrategy};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -218,6 +227,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+# }
 ```
 
 可用策略：
