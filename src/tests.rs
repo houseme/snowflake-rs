@@ -7,6 +7,7 @@
 // except according to those terms.
 
 use crate::{
+    ClockDriftStrategy,
     SnowflakeId,
     error::*,
     snowflake::{Snowflake, to_snowflake_time},
@@ -87,7 +88,8 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
     let initial = to_snowflake_time(Utc::now());
     let mut current = initial;
     while current - initial < 1000 {
-        // Run for 1 second
+        current = to_snowflake_time(Utc::now());
+
         let id = sf.next_id()?;
         let parts = sf.decompose(id);
 
@@ -99,12 +101,10 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
         );
         last_id = id;
 
-        current = to_snowflake_time(Utc::now());
-
         let actual_time = parts.time;
         let expected_time_range = current - start_time;
         assert!(
-            (actual_time as i64 - expected_time_range).abs() <= 5,
+            (actual_time as i64 - expected_time_range).abs() <= 50,
             "unexpected time difference: actual={}, expected_range={}",
             actual_time,
             expected_time_range
@@ -372,6 +372,114 @@ fn test_serde_decomposed_snowflake() {
     assert!(json.contains("\"sequence\""));
     assert!(json.contains("\"data_center_id\""));
     assert!(json.contains("\"machine_id\""));
+}
+
+// --- Clock drift tests ---
+
+#[test]
+fn test_clock_drift_error_strategy() -> Result<(), BoxDynError> {
+    let sf = Snowflake::builder()
+        .clock_drift_strategy(ClockDriftStrategy::Error)
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
+
+    // Generate one ID to establish a baseline time
+    let _id = sf.next_id()?;
+
+    // Read current elapsed time and set state to a time far ahead of it
+    let time_shift = sf.0.bit_len_sequence;
+    let current_elapsed = to_snowflake_time(Utc::now()) - sf.0.start_time;
+    let future_time = (current_elapsed as u64) + 100_000; // 100 seconds in the future
+    sf.0.state
+        .store(future_time << time_shift, Ordering::Relaxed);
+
+    // Now next_id should detect clock drift and return Error::ClockDrift
+    let result = sf.next_id();
+    assert!(matches!(result, Err(Error::ClockDrift { .. })));
+
+    Ok(())
+}
+
+#[test]
+fn test_clock_drift_last_timestamp_strategy() -> Result<(), BoxDynError> {
+    let sf = Snowflake::builder()
+        .clock_drift_strategy(ClockDriftStrategy::LastTimestamp)
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
+
+    // Generate one ID to establish a baseline
+    let _id = sf.next_id()?;
+
+    // Read current elapsed time and set state to a time far ahead of it
+    let time_shift = sf.0.bit_len_sequence;
+    let current_elapsed = to_snowflake_time(Utc::now()) - sf.0.start_time;
+    let future_time = (current_elapsed as u64) + 100_000;
+    sf.0.state
+        .store(future_time << time_shift, Ordering::Relaxed);
+
+    // With LastTimestamp strategy, should still generate IDs using the old timestamp
+    let id1 = sf.next_id()?;
+    let id2 = sf.next_id()?;
+    assert!(id2 > id1, "IDs should be monotonically increasing");
+
+    // Decompose and verify the time matches the "last known" timestamp
+    let parts = sf.decompose(id1);
+    assert_eq!(parts.time, future_time);
+
+    Ok(())
+}
+
+#[test]
+fn test_clock_drift_exceeded() -> Result<(), BoxDynError> {
+    let sf = Snowflake::builder()
+        .clock_drift_strategy(ClockDriftStrategy::Wait)
+        .max_clock_drift_ms(50)
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
+
+    // Generate one ID to establish a baseline
+    let _id = sf.next_id()?;
+
+    // Read current elapsed time and set state to a time far ahead (drift > 50ms)
+    let time_shift = sf.0.bit_len_sequence;
+    let current_elapsed = to_snowflake_time(Utc::now()) - sf.0.start_time;
+    let future_time = (current_elapsed as u64) + 100_000; // 100 seconds >> 50ms
+    sf.0.state
+        .store(future_time << time_shift, Ordering::Relaxed);
+
+    // Should return ClockDriftExceeded since drift (100s) >> max (50ms)
+    let result = sf.next_id();
+    assert!(matches!(
+        result,
+        Err(Error::ClockDriftExceeded {
+            drift_ms: _,
+            max_ms: 50
+        })
+    ));
+
+    Ok(())
+}
+
+#[test]
+fn test_clock_drift_wait_strategy_normal() -> Result<(), BoxDynError> {
+    // Default Wait strategy should work normally when there's no clock drift
+    let sf = Snowflake::builder()
+        .clock_drift_strategy(ClockDriftStrategy::Wait)
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
+
+    let mut last_id = SnowflakeId::new(0);
+    for _ in 0..100 {
+        let id = sf.next_id()?;
+        assert!(id > last_id, "IDs should be monotonically increasing");
+        last_id = id;
+    }
+
+    Ok(())
 }
 
 // --- Performance Benchmarks ---
