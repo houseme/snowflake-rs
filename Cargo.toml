@@ -18,6 +18,7 @@ ip-fallback = ["dep:pnet_datalink"]
 serde = ["dep:serde"]
 tracing = ["dep:tracing"]
 metrics = ["dep:metrics"]
+full = ["serde", "tracing", "metrics", "ip-fallback"]
 
 [dependencies]
 chrono = { version = "0.4.45", default-features = false, features = ["now"] }

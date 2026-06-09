@@ -481,6 +481,32 @@ fn test_clock_drift_wait_strategy_normal() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+// --- Combined feature test ---
+
+#[test]
+fn test_full_features() {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()
+        .unwrap();
+
+    let id = sf.next_id().unwrap();
+    assert!(id.as_u64() > 0);
+
+    let decomposed = sf.decompose(id);
+    assert_eq!(decomposed.machine_id, 1);
+    assert_eq!(decomposed.data_center_id, 1);
+
+    // Verify serde roundtrip when serde feature is enabled
+    #[cfg(feature = "serde")]
+    {
+        let json = serde_json::to_string(&id).unwrap();
+        let back: SnowflakeId = serde_json::from_str(&json).unwrap();
+        assert_eq!(id, back);
+    }
+}
+
 // --- Performance Benchmarks ---
 // These tests are ignored by default. Run with `cargo test -- --ignored`.
 
