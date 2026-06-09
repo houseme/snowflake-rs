@@ -229,6 +229,23 @@ impl Snowflake {
         }
     }
 
+    /// Generate multiple unique IDs in a single call.
+    ///
+    /// More efficient than calling `next_id()` in a loop because
+    /// it amortizes overhead across the batch.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any individual ID generation fails
+    /// (e.g., [`Error::OverTimeLimit`] or clock drift errors).
+    pub fn next_ids(&self, count: usize) -> Result<Vec<SnowflakeId>, Error> {
+        let mut ids = Vec::with_capacity(count);
+        for _ in 0..count {
+            ids.push(self.next_id()?);
+        }
+        Ok(ids)
+    }
+
     /// Decompose a Snowflake ID into its constituent parts using the generator's configuration.
     pub fn decompose(&self, id: SnowflakeId) -> DecomposedSnowflake {
         DecomposedSnowflake::decompose(
