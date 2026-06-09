@@ -8,8 +8,7 @@
 
 use crate::builder::Builder;
 use crate::error::*;
-use base64::Engine;
-use base64::engine::general_purpose;
+use crate::id::SnowflakeId;
 use chrono::prelude::*;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -69,7 +68,7 @@ impl Snowflake {
     ///
     /// Returns [`Error::OverTimeLimit`] if the timestamp exceeds the maximum value
     /// representable by the configured time bit length.
-    pub fn next_id(&self) -> Result<u64, Error> {
+    pub fn next_id(&self) -> Result<SnowflakeId, Error> {
         let sequence_mask = (1u64 << self.0.bit_len_sequence) - 1;
         let time_shift = self.0.bit_len_sequence;
         let time_max = (1u64 << self.0.bit_len_time) - 1;
@@ -123,16 +122,16 @@ impl Snowflake {
                         << (self.0.bit_len_machine_id + self.0.bit_len_sequence))
                     | (u64::from(self.0.machine_id) << self.0.bit_len_sequence)
                     | next_sequence;
-                return Ok(id);
+                return Ok(SnowflakeId::new(id));
             }
             // CAS failure means that another thread has modified its state and the loop will be retried
         }
     }
 
     /// Decompose a Snowflake ID into its constituent parts using the generator's configuration.
-    pub fn decompose(&self, id: u64) -> DecomposedSnowflake {
+    pub fn decompose(&self, id: SnowflakeId) -> DecomposedSnowflake {
         DecomposedSnowflake::decompose(
-            id,
+            id.as_u64(),
             self.0.bit_len_time,
             self.0.bit_len_sequence,
             self.0.bit_len_data_center_id,
@@ -170,8 +169,8 @@ fn til_next_millis(last_timestamp: i64) {
 ///
 /// Created by calling [`Snowflake::decompose`] or [`DecomposedSnowflake::decompose`].
 pub struct DecomposedSnowflake {
-    /// Original `u64` ID.
-    pub id: u64,
+    /// The Snowflake ID.
+    pub id: SnowflakeId,
     /// Elapsed milliseconds since the configured start time.
     pub time: u64,
     /// Sequence number within the same millisecond.
@@ -212,12 +211,18 @@ impl DecomposedSnowflake {
         let data_center_id_mask = (1u64 << bit_len_data_center_id) - 1;
 
         Self {
-            id,
+            id: SnowflakeId::new(id),
             time: id >> time_shift,
             data_center_id: (id >> data_center_id_shift) & data_center_id_mask,
             machine_id: (id >> machine_id_shift) & machine_id_mask,
             sequence: (id >> sequence_shift) & sequence_mask,
         }
+    }
+
+    /// Returns the underlying `SnowflakeId`.
+    #[must_use]
+    pub fn to_id(&self) -> SnowflakeId {
+        self.id
     }
 
     /// Returns the elapsed time component as nanoseconds.
@@ -229,109 +234,61 @@ impl DecomposedSnowflake {
     /// Returns the ID as a signed `i64`.
     #[must_use]
     pub fn int64(&self) -> i64 {
-        self.id as i64
+        self.id.int64()
     }
 
     /// Returns the decimal string representation of the ID.
     #[must_use]
     pub fn string(&self) -> String {
-        self.id.to_string()
+        self.id.string()
     }
 
     /// Returns the binary string representation of the ID.
     #[must_use]
     pub fn base2(&self) -> String {
-        format!("{:b}", self.id)
+        self.id.base2()
     }
 
     /// Returns the base32 encoded string using a custom alphabet.
     #[must_use]
     pub fn base32(&self) -> String {
-        const ENCODE_BASE32_MAP: &str = "ybndrfg8ejkmcpqxot1uwisza345h769";
-        let mut id = self.id;
-        if id < 32 {
-            return ENCODE_BASE32_MAP
-                .chars()
-                .nth(id as usize)
-                .unwrap()
-                .to_string();
-        }
-
-        let mut b = Vec::new();
-        while id >= 32 {
-            b.push(ENCODE_BASE32_MAP.chars().nth((id % 32) as usize).unwrap());
-            id /= 32;
-        }
-        b.push(ENCODE_BASE32_MAP.chars().nth(id as usize).unwrap());
-
-        b.reverse();
-        b.into_iter().collect()
+        self.id.base32()
     }
 
     /// Returns the lowercase hexadecimal string representation of the ID.
     #[must_use]
     pub fn hex(&self) -> String {
-        format!("{:x}", self.id)
+        self.id.hex()
     }
 
     /// Returns the base36 encoded string (digits + lowercase letters).
     #[must_use]
     pub fn base36(&self) -> String {
-        const CHARSET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        let mut id = self.id;
-        if id == 0 {
-            return "0".to_string();
-        }
-        let mut buf = Vec::new();
-        while id > 0 {
-            buf.push(CHARSET[(id % 36) as usize]);
-            id /= 36;
-        }
-        buf.reverse();
-        String::from_utf8(buf).expect("base36 charset is valid UTF-8")
+        self.id.base36()
     }
 
     /// Returns the base58 encoded string.
     #[must_use]
     pub fn base58(&self) -> String {
-        const ENCODE_BASE58_MAP: &str =
-            "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
-        let mut id = self.id;
-        if id < 58 {
-            return ENCODE_BASE58_MAP
-                .chars()
-                .nth(id as usize)
-                .unwrap()
-                .to_string();
-        }
-
-        let mut b = Vec::new();
-        while id >= 58 {
-            b.push(ENCODE_BASE58_MAP.chars().nth((id % 58) as usize).unwrap());
-            id /= 58;
-        }
-        b.push(ENCODE_BASE58_MAP.chars().nth(id as usize).unwrap());
-
-        b.reverse();
-        b.into_iter().collect()
+        self.id.base58()
     }
 
     /// Returns the base64 encoded string of the raw 8-byte ID.
     #[must_use]
     pub fn base64(&self) -> String {
-        general_purpose::STANDARD.encode(self.id.to_be_bytes())
+        self.id.base64()
     }
 
     /// Returns the decimal string representation as bytes.
     #[must_use]
     pub fn bytes(&self) -> Vec<u8> {
-        self.id.to_string().into_bytes()
+        self.id.bytes()
     }
 
     /// Returns the raw 8-byte big-endian representation of the ID.
     #[must_use]
     pub fn int_bytes(&self) -> [u8; 8] {
-        self.id.to_be_bytes()
+        self.id.int_bytes()
     }
 
     /// Returns the elapsed time in milliseconds since the configured start time.
@@ -348,5 +305,11 @@ impl std::fmt::Display for DecomposedSnowflake {
             "id={}, time={}, data_center={}, machine={}, seq={}",
             self.id, self.time, self.data_center_id, self.machine_id, self.sequence
         )
+    }
+}
+
+impl From<&DecomposedSnowflake> for SnowflakeId {
+    fn from(decomposed: &DecomposedSnowflake) -> Self {
+        decomposed.id
     }
 }
