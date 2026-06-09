@@ -17,9 +17,14 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// Shared state and configuration for the [`Snowflake`] generator.
 ///
 /// Designed to be lock-free for high concurrency performance.
+/// Cache-line aligned to prevent false sharing between threads.
+#[repr(align(64))]
 pub struct SharedSnowflake {
+    // Hot path — written by every next_id() call
     /// Atomic state packing `elapsed_time` (high bits) and `sequence` (low bits).
     pub(crate) state: AtomicU64,
+
+    // Cold path — read-only after init
     /// Start timestamp in milliseconds since Unix epoch.
     pub(crate) start_time: i64,
     /// Data center ID.
