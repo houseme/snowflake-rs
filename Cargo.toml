@@ -17,6 +17,7 @@ default = []
 ip-fallback = ["dep:pnet_datalink"]
 serde = ["dep:serde"]
 tracing = ["dep:tracing"]
+metrics = ["dep:metrics"]
 
 [dependencies]
 chrono = { version = "0.4.45", default-features = false, features = ["now"] }
@@ -25,12 +26,14 @@ pnet_datalink = { version = "0.35.0", default-features = false, optional = true 
 base64 = "0.22.1"
 serde = { version = "1", features = ["derive"], optional = true }
 tracing = { version = "0.1", optional = true }
+metrics = { version = "0.24", optional = true }
 
 [dev-dependencies]
 criterion = "0.8.2"
 num_cpus = "1.17.0"
 serde_json = "1"
 tracing-subscriber = "0.3"
+metrics-util = "0.19"
 
 [[bench]]
 name = "bench"
