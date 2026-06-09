@@ -32,6 +32,20 @@ pub enum Error {
     NoPrivateIP,
     #[error("failed to parse SnowflakeId: {0}")]
     ParseIdFailed(String),
+    #[error("clock drifted backward: last_time={last_time}, current_time={current_time}")]
+    ClockDrift {
+        /// The last recorded timestamp in the state.
+        last_time: u64,
+        /// The current (earlier) timestamp from the system clock.
+        current_time: u64,
+    },
+    #[error("clock drift {drift_ms}ms exceeded maximum allowed {max_ms}ms")]
+    ClockDriftExceeded {
+        /// The actual drift in milliseconds.
+        drift_ms: u64,
+        /// The configured maximum allowed drift in milliseconds.
+        max_ms: i64,
+    },
     #[error(
         "invalid bit length configuration: time({0}) + sequence({1}) + data_center({2}) + machine({3}) must be 63"
     )]

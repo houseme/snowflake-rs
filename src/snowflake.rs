@@ -73,6 +73,12 @@ impl Snowflake {
     ///
     /// Returns [`Error::OverTimeLimit`] if the timestamp exceeds the maximum value
     /// representable by the configured time bit length.
+    ///
+    /// Returns [`Error::ClockDrift`] when the clock drift strategy is [`ClockDriftStrategy::Error`]
+    /// and backward clock drift is detected.
+    ///
+    /// Returns [`Error::ClockDriftExceeded`] when the clock drift strategy is [`ClockDriftStrategy::Wait`]
+    /// and the drift exceeds `max_clock_drift_ms`.
     pub fn next_id(&self) -> Result<SnowflakeId, Error> {
         let sequence_mask = (1u64 << self.0.bit_len_sequence) - 1;
         let time_shift = self.0.bit_len_sequence;
@@ -83,6 +89,61 @@ impl Snowflake {
             let last_time = current_state >> time_shift;
 
             let elapsed_time = current_elapsed_time(self.0.start_time) as u64;
+
+            // Clock drift detection: elapsed_time < last_time means clock went backward
+            if elapsed_time < last_time {
+                match self.0.clock_drift_strategy {
+                    ClockDriftStrategy::Wait => {
+                        if let Some(max_drift) = self.0.max_clock_drift_ms {
+                            let drift = last_time - elapsed_time;
+                            if drift > max_drift as u64 {
+                                return Err(Error::ClockDriftExceeded {
+                                    drift_ms: drift,
+                                    max_ms: max_drift,
+                                });
+                            }
+                        }
+                        til_next_millis(self.0.start_time + last_time as i64);
+                        continue;
+                    }
+                    ClockDriftStrategy::Error => {
+                        return Err(Error::ClockDrift {
+                            last_time,
+                            current_time: elapsed_time,
+                        });
+                    }
+                    ClockDriftStrategy::LastTimestamp => {
+                        let sequence = (current_state & sequence_mask) + 1;
+                        if sequence > sequence_mask {
+                            til_next_millis(self.0.start_time + last_time as i64);
+                            continue;
+                        }
+                        let new_state = (last_time << time_shift) | sequence;
+                        if self
+                            .0
+                            .state
+                            .compare_exchange_weak(
+                                current_state,
+                                new_state,
+                                Ordering::AcqRel,
+                                Ordering::Relaxed,
+                            )
+                            .is_ok()
+                        {
+                            let id = (last_time
+                                << (self.0.bit_len_data_center_id
+                                    + self.0.bit_len_machine_id
+                                    + self.0.bit_len_sequence))
+                                | (u64::from(self.0.data_center_id)
+                                    << (self.0.bit_len_machine_id + self.0.bit_len_sequence))
+                                | (u64::from(self.0.machine_id) << self.0.bit_len_sequence)
+                                | sequence;
+                            return Ok(SnowflakeId::new(id));
+                        }
+                        continue;
+                    }
+                }
+            }
 
             let (next_time, next_sequence) = if elapsed_time == last_time {
                 // In the same millisecond, the serial number is incremented
