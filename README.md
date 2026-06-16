@@ -1,6 +1,6 @@
 # Snowflake-Me
 
-English | [简体中文](README_CN.md)
+English | [Chinese](README_CN.md)
 
 [![Crates.io](https://img.shields.io/crates/v/snowflake-me.svg)](https://crates.io/crates/snowflake-me)
 [![Docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me)

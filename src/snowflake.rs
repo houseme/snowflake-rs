@@ -349,7 +349,7 @@ impl DecomposedSnowflake {
             + bit_len_machine_id as u32;
         assert_eq!(total_bits, 63, "Total bit length must be 63");
 
-        // 修正位移计算
+        // Compute the bit-shift offset for each ID section.
         let sequence_shift = 0;
         let machine_id_shift = sequence_shift + bit_len_sequence;
         let data_center_id_shift = machine_id_shift + bit_len_machine_id;
