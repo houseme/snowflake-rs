@@ -9,16 +9,12 @@
 //! Time source abstraction supporting both `std` and `no_std` environments.
 
 #[cfg(feature = "std")]
-use chrono::prelude::*;
-
-/// Microseconds per millisecond, used to convert nanoseconds to milliseconds.
-#[cfg(feature = "std")]
-const MICROS_PER_MILLI: i64 = 1_000_000;
+use jiff::Timestamp;
 
 /// Get current time in milliseconds since Unix epoch (std version).
 #[cfg(feature = "std")]
 pub(crate) fn current_millis() -> i64 {
-    Utc::now().timestamp_nanos_opt().unwrap_or(0) / MICROS_PER_MILLI
+    Timestamp::now().as_millisecond()
 }
 
 // --- no_std time source ---

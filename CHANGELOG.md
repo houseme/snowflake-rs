@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-06-16
+
+### Changed
+
+- **Time dependency switched from `chrono` to `jiff`** (`jiff 0.2.28`).
+  - `current_millis()` (std path) now uses `jiff::Timestamp::now().as_millisecond()` instead of `chrono`'s nanosecond division.
+  - The `std` feature now enables `dep:jiff` + `jiff/std` (previously `chrono`).
+  - MSRV is unchanged: `jiff 0.2.28` targets Rust 1.70, still within this crate's 1.75 MSRV.
+  - `jiff` is now an internal dependency only — no datetime type appears in the public API.
+
+### Removed
+
+- Internal `to_snowflake_time()` helper removed (the start time is now stored as raw milliseconds).
+- Misnamed `MICROS_PER_MILLI` constant removed; replaced by the correctly-named `NANOS_PER_MILLI` (used only by `DecomposedSnowflake::nanos_time()`).
+
+### Breaking Changes
+
+- **`Builder::start_time` is unified to `start_time(i64)`** — milliseconds since the Unix epoch — for both `std` and `no_std`. Previously the `std` build accepted a `chrono::DateTime<chrono::Utc>`. Pass a raw millisecond timestamp instead (e.g. `1_640_995_200_000` for 2022-01-01 UTC).
+- **`Error::StartTimeAheadOfCurrentTime` payload changed** from `chrono::DateTime<Utc>` to `i64` (the offending start time in milliseconds).
+
+### Migration
+
+Replace any `start_time` call that passed a `chrono::DateTime<chrono::Utc>` with its millisecond value:
+
+```rust
+// Before (v1.x, std)
+// .start_time(chrono::Utc::now())
+
+// After (v2.0)
+.start_time(/* millis since epoch, e.g. from your clock or a fixed epoch */)
+```
+
+See `docs/chrono-to-jiff-migration.md` for the full feasibility analysis and rationale.
+
 ## [1.0.0] - 2026-06-09
 
 ### Added

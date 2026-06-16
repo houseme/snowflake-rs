@@ -60,21 +60,21 @@ snowflake-me = "1.0"
 
 ```toml
 [dependencies]
-snowflake-me = { version = "1.0", features = ["ip-fallback"] }
+snowflake-me = { version = "2.0", features = ["ip-fallback"] }
 ```
 
 一次性启用所有可选特性：
 
 ```toml
 [dependencies]
-snowflake-me = { version = "1.0", features = ["full"] }
+snowflake-me = { version = "2.0", features = ["full"] }
 ```
 
 ### 特性标志
 
 | 特性 | 默认 | 描述 |
 |------|------|------|
-| `std` | 是 | 标准库支持（通过 `chrono` 获取时间）。在 `no_std` 环境下请禁用。 |
+| `std` | 是 | 标准库支持（通过 `jiff` 获取时间）。在 `no_std` 环境下请禁用。 |
 | `ip-fallback` | 否 | 从本地网络接口（IPv4/IPv6）自动检测 `machine_id` 和 `data_center_id`。需要 `std`。 |
 | `serde` | 否 | `SnowflakeId`（u64）和 `SnowflakeIdString`（字符串）的 Serde 序列化/反序列化支持。 |
 | `tracing` | 否 | 通过 `tracing` 在关键路径（ID 生成、时钟漂移等）输出结构化日志。 |
@@ -241,7 +241,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```toml
 [dependencies]
-snowflake-me = { version = "1.0", default-features = false }
+snowflake-me = { version = "2.0", default-features = false }
 ```
 
 ```rust,ignore

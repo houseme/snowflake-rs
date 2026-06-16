@@ -57,7 +57,7 @@
 //!
 //! | Feature | Dependencies | Default | Description |
 //! |---------|-------------|---------|-------------|
-//! | `std` | chrono, thiserror/std | Yes | Standard library support (time via chrono) |
+//! | `std` | jiff, thiserror/std | Yes | Standard library support (time via jiff) |
 //! | `ip-fallback` | std, pnet_datalink | No | Auto-derive IDs from local IP address |
 //! | `serde` | serde | No | Serde serialization for `SnowflakeId` and `DecomposedSnowflake` |
 //! | `tracing` | tracing | No | Structured logging at key points |
@@ -73,7 +73,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! snowflake-me = { version = "1.0", features = ["ip-fallback"] }
+//! snowflake-me = { version = "2.0", features = ["ip-fallback"] }
 //! ```
 //!
 //! ### 2. Basic Usage

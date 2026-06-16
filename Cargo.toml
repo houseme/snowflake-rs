@@ -1,6 +1,6 @@
 [package]
 name = "snowflake_me"
-version = "1.0.0"
+version = "2.0.0"
 authors = ["houseme <housemecn@gmail.com> and housemen <houseme@outlook.com>"]
 license = "MIT OR Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
@@ -14,7 +14,7 @@ edition = "2024"
 
 [features]
 default = ["std"]
-std = ["chrono", "thiserror/std"]
+std = ["dep:jiff", "jiff/std", "thiserror/std"]
 ip-fallback = ["std", "dep:pnet_datalink"]
 serde = ["dep:serde"]
 tracing = ["dep:tracing"]
@@ -23,7 +23,7 @@ use-strong-cas = []
 full = ["std", "serde", "tracing", "metrics", "ip-fallback"]
 
 [dependencies]
-chrono = { version = "0.4.45", default-features = false, features = ["now"], optional = true }
+jiff = { version = "0.2.28", default-features = false, optional = true }
 thiserror = { version = "2.0.18", default-features = false }
 pnet_datalink = { version = "0.35.0", default-features = false, optional = true }
 base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }

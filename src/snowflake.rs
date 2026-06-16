@@ -291,14 +291,8 @@ impl Clone for Snowflake {
     }
 }
 
-/// Microseconds per millisecond, used to convert nanoseconds to milliseconds.
-const MICROS_PER_MILLI: i64 = 1_000_000;
-
-/// Convert a `DateTime<Utc>` to snowflake time in milliseconds.
-#[cfg(feature = "std")]
-pub(crate) fn to_snowflake_time(time: chrono::DateTime<chrono::Utc>) -> i64 {
-    time.timestamp_nanos_opt().unwrap_or(0) / MICROS_PER_MILLI
-}
+/// Nanoseconds per millisecond, used to convert elapsed milliseconds to nanoseconds.
+const NANOS_PER_MILLI: i64 = 1_000_000;
 
 fn current_elapsed_time(start_time: i64) -> i64 {
     time::current_millis() - start_time
@@ -377,7 +371,7 @@ impl DecomposedSnowflake {
     /// Returns the elapsed time component as nanoseconds.
     #[must_use]
     pub fn nanos_time(&self) -> i64 {
-        (self.time as i64) * MICROS_PER_MILLI
+        (self.time as i64) * NANOS_PER_MILLI
     }
 
     /// Returns the ID as a signed `i64`.

@@ -6,8 +6,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#[cfg(feature = "std")]
-use chrono::{DateTime, Utc};
 use thiserror::Error;
 
 extern crate alloc;
@@ -22,11 +20,11 @@ pub(crate) type BoxDynError = Box<dyn core::error::Error + 'static + Send + Sync
 pub enum Error {
     /// The configured start time is in the future relative to the system clock.
     ///
-    /// Only raised when the `std` feature is enabled and a `DateTime<Utc>` start time
-    /// is provided to [`Builder::start_time`](crate::Builder::start_time).
+    /// Only raised when the `std` feature is enabled and a start time (milliseconds
+    /// since the Unix epoch) is provided to [`Builder::start_time`](crate::Builder::start_time).
     #[cfg(feature = "std")]
     #[error("start_time `{0}` is ahead of current time")]
-    StartTimeAheadOfCurrentTime(DateTime<Utc>),
+    StartTimeAheadOfCurrentTime(i64),
 
     /// The user-provided `machine_id` closure returned an error.
     #[error("machine_id returned an error: {0}")]

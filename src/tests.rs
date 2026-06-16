@@ -7,10 +7,8 @@
 // except according to those terms.
 
 #[cfg(feature = "std")]
-use crate::{ClockDriftStrategy, snowflake::to_snowflake_time};
+use crate::ClockDriftStrategy;
 use crate::{SnowflakeId, error::*, snowflake::Snowflake};
-#[cfg(feature = "std")]
-use chrono::prelude::*;
 #[cfg(feature = "std")]
 use std::time::Duration;
 #[cfg(feature = "std")]
@@ -37,7 +35,7 @@ fn test_next_id() -> Result<(), BoxDynError> {
 #[test]
 fn test_once() -> Result<(), BoxDynError> {
     let start_instant = Instant::now();
-    let now = Utc::now();
+    let now = crate::time::current_millis();
     let expected_machine_id = 10u64;
     let expected_data_center_id = 5u64;
 
@@ -83,8 +81,8 @@ fn test_once() -> Result<(), BoxDynError> {
 #[cfg(feature = "std")]
 #[test]
 fn test_run_for_1s() -> Result<(), BoxDynError> {
-    let now = Utc::now();
-    let start_time = to_snowflake_time(now);
+    let now = crate::time::current_millis();
+    let start_time = now;
     let expected_machine_id = 15u64;
 
     let sf = Snowflake::builder()
@@ -96,10 +94,10 @@ fn test_run_for_1s() -> Result<(), BoxDynError> {
     let mut last_id = SnowflakeId::new(0);
     let mut max_sequence: u64 = 0;
 
-    let initial = to_snowflake_time(Utc::now());
+    let initial = crate::time::current_millis();
     let mut current = initial;
     while current - initial < 1000 {
-        current = to_snowflake_time(Utc::now());
+        current = crate::time::current_millis();
 
         let id = sf.next_id()?;
         let parts = sf.decompose(id);
@@ -203,7 +201,7 @@ pub enum TestError {
 #[cfg(feature = "std")]
 #[test]
 fn test_builder_errors() {
-    let start_time = Utc::now() + chrono::Duration::seconds(1);
+    let start_time = crate::time::current_millis() + 1_000;
     assert!(matches!(
         Snowflake::builder().start_time(start_time).finalize(),
         Err(Error::StartTimeAheadOfCurrentTime(_))
@@ -406,7 +404,7 @@ fn test_clock_drift_error_strategy() -> Result<(), BoxDynError> {
 
     // Read current elapsed time and set state to a time far ahead of it
     let time_shift = sf.0.bit_len_sequence;
-    let current_elapsed = to_snowflake_time(Utc::now()) - sf.0.start_time;
+    let current_elapsed = crate::time::current_millis() - sf.0.start_time;
     let future_time = (current_elapsed as u64) + 100_000; // 100 seconds in the future
     sf.0.state
         .store(future_time << time_shift, Ordering::Relaxed);
@@ -432,7 +430,7 @@ fn test_clock_drift_last_timestamp_strategy() -> Result<(), BoxDynError> {
 
     // Read current elapsed time and set state to a time far ahead of it
     let time_shift = sf.0.bit_len_sequence;
-    let current_elapsed = to_snowflake_time(Utc::now()) - sf.0.start_time;
+    let current_elapsed = crate::time::current_millis() - sf.0.start_time;
     let future_time = (current_elapsed as u64) + 100_000;
     sf.0.state
         .store(future_time << time_shift, Ordering::Relaxed);
@@ -464,7 +462,7 @@ fn test_clock_drift_exceeded() -> Result<(), BoxDynError> {
 
     // Read current elapsed time and set state to a time far ahead (drift > 50ms)
     let time_shift = sf.0.bit_len_sequence;
-    let current_elapsed = to_snowflake_time(Utc::now()) - sf.0.start_time;
+    let current_elapsed = crate::time::current_millis() - sf.0.start_time;
     let future_time = (current_elapsed as u64) + 100_000; // 100 seconds >> 50ms
     sf.0.state
         .store(future_time << time_shift, Ordering::Relaxed);

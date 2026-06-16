@@ -60,21 +60,21 @@ To enable the IP address fallback feature:
 
 ```toml
 [dependencies]
-snowflake-me = { version = "1.0", features = ["ip-fallback"] }
+snowflake-me = { version = "2.0", features = ["ip-fallback"] }
 ```
 
 To enable all optional features at once:
 
 ```toml
 [dependencies]
-snowflake-me = { version = "1.0", features = ["full"] }
+snowflake-me = { version = "2.0", features = ["full"] }
 ```
 
 ### Feature Flags
 
 | Feature | Default | Description |
 |---------|---------|-------------|
-| `std` | Yes | Standard library support (time via `chrono`). Disable for `no_std` environments. |
+| `std` | Yes | Standard library support (time via `jiff`). Disable for `no_std` environments. |
 | `ip-fallback` | No | Auto-detect `machine_id` and `data_center_id` from local network interfaces (IPv4/IPv6). Requires `std`. |
 | `serde` | No | Serde `Serialize`/`Deserialize` for `SnowflakeId` (u64) and `SnowflakeIdString` (string). |
 | `tracing` | No | Structured logging via `tracing` at key points (ID generation, clock drift, etc.). |
@@ -242,7 +242,7 @@ In `no_std` environments, disable default features and provide a time source:
 
 ```toml
 [dependencies]
-snowflake-me = { version = "1.0", default-features = false }
+snowflake-me = { version = "2.0", default-features = false }
 ```
 
 ```rust,ignore
