@@ -36,6 +36,7 @@ fn test_next_id() -> Result<(), BoxDynError> {
 #[cfg(feature = "std")]
 #[test]
 fn test_once() -> Result<(), BoxDynError> {
+    let start_instant = Instant::now();
     let now = Utc::now();
     let expected_machine_id = 10u64;
     let expected_data_center_id = 5u64;
@@ -50,16 +51,22 @@ fn test_once() -> Result<(), BoxDynError> {
     thread::sleep(Duration::from_millis(sleep_duration_ms));
 
     let id = sf.next_id()?;
+    let elapsed_ms = start_instant.elapsed().as_millis() as i64;
     let parts = sf.decompose(id);
 
     let actual_time = parts.time;
-    // 允许时间上的微小误差
-    if actual_time < sleep_duration_ms || actual_time > sleep_duration_ms + 50 {
-        panic!(
-            "Unexpected time {}, expected around {}",
-            actual_time, sleep_duration_ms
-        )
-    }
+    // parts.time is the milliseconds elapsed since start_time, captured right
+    // before the sleep above. We compare it against an independent monotonic
+    // measurement rather than the raw sleep duration: thread::sleep only
+    // guarantees sleeping *at least* the requested duration, and the test
+    // runner / OS scheduler (notably on macOS) can add noticeable overhead.
+    let diff = actual_time as i64 - elapsed_ms;
+    assert!(
+        diff.abs() <= 100,
+        "unexpected time difference: actual={}ms, elapsed={}ms",
+        actual_time,
+        elapsed_ms
+    );
 
     assert_eq!(
         parts.machine_id, expected_machine_id,
