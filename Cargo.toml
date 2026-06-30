@@ -23,7 +23,7 @@ use-strong-cas = []
 full = ["std", "serde", "tracing", "metrics", "ip-fallback"]
 
 [dependencies]
-jiff = { version = "0.2.28", default-features = false, optional = true }
+jiff = { version = "0.2.31", default-features = false, optional = true }
 thiserror = { version = "2.0.18", default-features = false }
 pnet_datalink = { version = "0.35.0", default-features = false, optional = true }
 base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
