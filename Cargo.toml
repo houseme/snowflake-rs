@@ -1,7 +1,7 @@
 [package]
 name = "snowflake_me"
-version = "2.0.0"
-authors = ["houseme <housemecn@gmail.com> and housemen <houseme@outlook.com>"]
+version = "2.0.1"
+authors = ["houseme <housemecn@gmail.com> and housemecn <houseme@outlook.com>"]
 license = "MIT OR Apache-2.0"
 description = "A distributed unique ID generator inspired by Twitter's Snowflake"
 homepage = "https://github.com/houseme/snowflake-rs"
@@ -50,4 +50,3 @@ harness = false
 [[example]]
 name = "serde_example"
 required-features = ["serde"]
-

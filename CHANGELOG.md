@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.0.1] - 2026-06-30
+
+### Changed
+
+- Bumped the internal `jiff` dependency from `0.2.28` to `0.2.31`.
+- Refreshed `Cargo.lock` to match the current dependency graph.
+- Updated GitHub Actions workflow dependencies to the current major versions of `actions/checkout` and `actions/cache`.
+- Switched the CI MSRV job to the stable toolchain while keeping the job in place as a compatibility smoke check.
+
+### Fixed
+
+- Corrected the package author metadata in `Cargo.toml`.
+- Updated README and crate-level documentation snippets to consistently reference `snowflake-me = "2.0.1"`.
+
 ## [2.0.0] - 2026-06-16
 
 ### Changed
@@ -229,6 +245,9 @@ See `docs/chrono-to-jiff-migration.md` for the full feasibility analysis and rat
 
 This is the initial version.
 
+[2.0.1]: https://github.com/houseme/snowflake-rs/releases/tag/v2.0.1
+[2.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/v2.0.0
+[1.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/v1.0.0
 [0.8.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.8.0
 [0.7.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.7.0
 [0.6.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.6.0
@@ -239,4 +258,3 @@ This is the initial version.
 [0.3.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.3.0
 [0.2.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.2.0
 [0.1.5]: https://github.com/houseme/snowflake-rs/releases/tag/v0.1.5
-
