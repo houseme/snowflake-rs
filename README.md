@@ -55,21 +55,21 @@ Add this library to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-snowflake_me = "2.1.0"
+snowflake_me = "2.1.1"
 ```
 
 To enable the IP address fallback feature:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.0", features = ["ip-fallback"] }
+snowflake_me = { version = "2.1.1", features = ["ip-fallback"] }
 ```
 
 To enable all optional features at once:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.0", features = ["full"] }
+snowflake_me = { version = "2.1.1", features = ["full"] }
 ```
 
 ### Feature Flags
@@ -244,7 +244,7 @@ In `no_std` environments, disable default features and provide a time source:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.0", default-features = false }
+snowflake_me = { version = "2.1.1", default-features = false }
 ```
 
 ```rust,ignore

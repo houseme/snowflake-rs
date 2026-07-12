@@ -30,4 +30,4 @@ commit_parsers = [
   { message = "^style", group = "Styling" },
 ]
 filter_commits = false
-tag_pattern = "v[0-9].*"
+tag_pattern = "v?[0-9].*"

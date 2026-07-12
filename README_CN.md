@@ -55,21 +55,21 @@
 
 ```toml
 [dependencies]
-snowflake_me = "2.1.0"
+snowflake_me = "2.1.1"
 ```
 
 启用 IP 地址自动回退功能：
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.0", features = ["ip-fallback"] }
+snowflake_me = { version = "2.1.1", features = ["ip-fallback"] }
 ```
 
 一次性启用所有可选特性：
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.0", features = ["full"] }
+snowflake_me = { version = "2.1.1", features = ["full"] }
 ```
 
 ### 特性标志
@@ -243,7 +243,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.0", default-features = false }
+snowflake_me = { version = "2.1.1", default-features = false }
 ```
 
 ```rust,ignore

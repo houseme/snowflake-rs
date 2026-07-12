@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-07-13
+
+### Fixed
+
+- Corrected the Codecov v7 upload configuration to use `files: lcov.info`, restoring coverage uploads after the action input schema change.
+
+### Changed
+
+- Updated crate metadata, README dependency snippets, and the docs.rs root URL for the `2.1.1` patch release.
+- Adjusted `git-cliff` tag matching so changelog automation recognizes both `v*` and numeric release tags used in this repository.
+
 ## [2.1.0] - 2026-07-13
 
 ### Added
@@ -254,23 +265,22 @@ See `docs/chrono-to-jiff-migration.md` for the full feasibility analysis and rat
 
 - Removed support for 16-bit machine ID.
 
-## [Unreleased]
-
 ## [0.1.5]
 
 This is the initial version.
 
-[2.1.0]: https://github.com/houseme/snowflake-rs/releases/tag/v2.1.0
-[2.0.1]: https://github.com/houseme/snowflake-rs/releases/tag/v2.0.1
-[2.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/v2.0.0
-[1.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/v1.0.0
-[0.8.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.8.0
-[0.7.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.7.0
-[0.6.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.6.0
-[0.5.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.5.0
-[0.4.1]: https://github.com/houseme/snowflake-rs/releases/tag/v0.4.1
-[0.4.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.4.0
-[0.3.1]: https://github.com/houseme/snowflake-rs/releases/tag/v0.3.1
-[0.3.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.3.0
-[0.2.0]: https://github.com/houseme/snowflake-rs/releases/tag/v0.2.0
-[0.1.5]: https://github.com/houseme/snowflake-rs/releases/tag/v0.1.5
+[2.1.1]: https://github.com/houseme/snowflake-rs/releases/tag/2.1.1
+[2.1.0]: https://github.com/houseme/snowflake-rs/releases/tag/2.1.0
+[2.0.1]: https://github.com/houseme/snowflake-rs/releases/tag/2.0.1
+[2.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/2.0.0
+[1.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/1.0.0
+[0.8.0]: https://github.com/houseme/snowflake-rs/releases/tag/0.8.0
+[0.7.0]: https://github.com/houseme/snowflake-rs/releases/tag/0.7.0
+[0.6.0]: https://github.com/houseme/snowflake-rs/releases/tag/0.6.0
+[0.5.0]: https://github.com/houseme/snowflake-rs/releases/tag/0.5.0
+[0.4.1]: https://github.com/houseme/snowflake-rs/releases/tag/0.4.1
+[0.4.0]: https://github.com/houseme/snowflake-rs/releases/tag/0.4.0
+[0.3.1]: https://github.com/houseme/snowflake-rs/releases/tag/0.3.1
+[0.3.0]: https://github.com/houseme/snowflake-rs/releases/tag/0.3.0
+[0.2.0]: https://github.com/houseme/snowflake-rs/releases/tag/0.2.0
+[0.1.5]: https://github.com/houseme/snowflake-rs/releases/tag/0.1.5
