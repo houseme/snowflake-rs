@@ -1,0 +1,46 @@
+name: Miri
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - 'feature/**'
+
+permissions:
+  contents: read
+
+jobs:
+  miri:
+    name: Miri (UB / data-race check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-miri-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install nightly + miri
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - name: Run Miri
+        # `--lib` keeps the run focused on the crate's unit tests and avoids
+        # pulling dev-only test crates (criterion/proptest) that are not
+        # Miri-compatible. `ip-fallback` is excluded because its network
+        # interface discovery depends on OS FFI (`getifaddrs`) unsupported by Miri.
+        run: |
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_snowflake_id_encoding_roundtrip
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_compose_decompose_roundtrip
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_next_ids_monotonic
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_snowflake_default
+        env:
+          MIRIFLAGS: "-Zmiri-disable-isolation"

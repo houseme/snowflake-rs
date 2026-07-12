@@ -1,0 +1,24 @@
+name: Semver
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'feature/**'
+
+permissions:
+  contents: read
+
+jobs:
+  semver_check:
+    name: cargo-semver-checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code (full history for baseline diff)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Run cargo-semver-checks
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          rust-toolchain: stable

@@ -6,6 +6,8 @@
 [![Docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me)
 [![Build Status](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
 [![License](https://img.shields.io/crates/l/snowflake_me)](LICENSE-APACHE)
+[![Miri](https://github.com/houseme/snowflake-rs/actions/workflows/miri.yml/badge.svg)](https://github.com/houseme/snowflake-rs/actions/workflows/miri.yml)
+[![Semver](https://github.com/houseme/snowflake-rs/actions/workflows/semver.yml/badge.svg)](https://github.com/houseme/snowflake-rs/actions/workflows/semver.yml)
 
 一个高性能、高并发、分布式的 Rust Snowflake ID 生成器实现。
 
@@ -53,21 +55,21 @@
 
 ```toml
 [dependencies]
-snowflake_me = "2.0.1"
+snowflake_me = "2.1.0"
 ```
 
 启用 IP 地址自动回退功能：
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.0.1", features = ["ip-fallback"] }
+snowflake_me = { version = "2.1.0", features = ["ip-fallback"] }
 ```
 
 一次性启用所有可选特性：
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.0.1", features = ["full"] }
+snowflake_me = { version = "2.1.0", features = ["full"] }
 ```
 
 ### 特性标志
@@ -241,7 +243,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.0.1", default-features = false }
+snowflake_me = { version = "2.1.0", default-features = false }
 ```
 
 ```rust,ignore

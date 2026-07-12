@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-13
+
+### Added
+
+- Added optimized batch ID generation for `Snowflake::next_ids(count)`, reserving contiguous sequence ranges per CAS operation while preserving cross-millisecond behavior.
+- Added `SnowflakeId::from_base32`, `SnowflakeId::from_base58`, and `SnowflakeId::from_base64` decoding helpers.
+- Added `Snowflake::compose` as the inverse of `decompose`, with component range validation.
+- Added `Default` for `Snowflake` and `DecomposedSnowflake::absolute_millis(start_time)`.
+
+### Changed
+
+- Extended benchmarks, unit tests, property tests, and loom coverage for batch generation and composition behavior.
+- Added Miri, cargo-semver-checks, and git-cliff based changelog workflows.
+- Updated README badges and dependency snippets for the `2.1.0` release.
+
 ## [2.0.1] - 2026-06-30
 
 ### Changed
@@ -19,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Corrected the package author metadata in `Cargo.toml`.
-- Updated README and crate-level documentation snippets to consistently reference `snowflake-me = "2.0.1"`.
+- Updated README and crate-level documentation snippets to consistently reference `snowflake_me = "2.0.1"`.
 
 ## [2.0.0] - 2026-06-16
 
@@ -245,6 +260,7 @@ See `docs/chrono-to-jiff-migration.md` for the full feasibility analysis and rat
 
 This is the initial version.
 
+[2.1.0]: https://github.com/houseme/snowflake-rs/releases/tag/v2.1.0
 [2.0.1]: https://github.com/houseme/snowflake-rs/releases/tag/v2.0.1
 [2.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/v2.0.0
 [1.0.0]: https://github.com/houseme/snowflake-rs/releases/tag/v1.0.0

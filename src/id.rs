@@ -118,6 +118,72 @@ impl SnowflakeId {
         general_purpose::STANDARD.encode(self.0.to_be_bytes())
     }
 
+    /// Decode a [`base64`](Self::base64)-encoded string back into a `SnowflakeId`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::ParseIdFailed`] if the input is not valid standard base64
+    /// or does not decode to exactly 8 bytes.
+    pub fn from_base64(s: &str) -> Result<Self, Error> {
+        let bytes = general_purpose::STANDARD
+            .decode(s)
+            .map_err(|e| Error::ParseIdFailed(e.to_string()))?;
+        if bytes.len() != 8 {
+            return Err(Error::ParseIdFailed(format!(
+                "base64 input decoded to {} bytes, expected 8",
+                bytes.len()
+            )));
+        }
+        let raw = u64::from_be_bytes(bytes.try_into().expect("length checked to be 8"));
+        Ok(Self(raw))
+    }
+
+    /// Decode a [`base32`](Self::base32)-encoded string back into a `SnowflakeId`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::ParseIdFailed`] if the input contains characters outside
+    /// the base32 alphabet or the value overflows `u64`.
+    pub fn from_base32(s: &str) -> Result<Self, Error> {
+        const MAP: &[u8; 32] = b"ybndrfg8ejkmcpqxot1uwisza345h769";
+        Self::from_positional(s, MAP)
+    }
+
+    /// Decode a [`base58`](Self::base58)-encoded string back into a `SnowflakeId`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::ParseIdFailed`] if the input contains characters outside
+    /// the base58 alphabet or the value overflows `u64`.
+    pub fn from_base58(s: &str) -> Result<Self, Error> {
+        const MAP: &[u8; 58] = b"123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+        Self::from_positional(s, MAP)
+    }
+
+    /// Shared positional-notation decoder for the custom-alphabet encodings.
+    fn from_positional<const N: usize>(s: &str, map: &[u8; N]) -> Result<Self, Error> {
+        let mut lookup = [255u8; 256];
+        for (i, &byte) in map.iter().enumerate() {
+            lookup[byte as usize] = i as u8;
+        }
+        let base = N as u64;
+        let mut result = 0u64;
+        for byte in s.bytes() {
+            let value = lookup[byte as usize];
+            if value == 255 {
+                return Err(Error::ParseIdFailed(format!(
+                    "invalid character in encoded ID: {:?}",
+                    char::from(byte)
+                )));
+            }
+            result = result
+                .checked_mul(base)
+                .and_then(|r| r.checked_add(u64::from(value)))
+                .ok_or_else(|| Error::ParseIdFailed("encoded value overflowed u64".into()))?;
+        }
+        Ok(Self(result))
+    }
+
     /// Returns the decimal string representation.
     #[must_use]
     pub fn string(&self) -> String {

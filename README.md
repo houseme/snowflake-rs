@@ -6,6 +6,8 @@ English | [Chinese](README_CN.md)
 [![Docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me)
 [![Build](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
 [![License](https://img.shields.io/crates/l/snowflake_me)](LICENSE-APACHE)
+[![Miri](https://github.com/houseme/snowflake-rs/actions/workflows/miri.yml/badge.svg)](https://github.com/houseme/snowflake-rs/actions/workflows/miri.yml)
+[![Semver](https://github.com/houseme/snowflake-rs/actions/workflows/semver.yml/badge.svg)](https://github.com/houseme/snowflake-rs/actions/workflows/semver.yml)
 
 A high-performance, highly concurrent, distributed Snowflake ID generator in Rust.
 
@@ -53,21 +55,21 @@ Add this library to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-snowflake_me = "2.0.1"
+snowflake_me = "2.1.0"
 ```
 
 To enable the IP address fallback feature:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.0.1", features = ["ip-fallback"] }
+snowflake_me = { version = "2.1.0", features = ["ip-fallback"] }
 ```
 
 To enable all optional features at once:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.0.1", features = ["full"] }
+snowflake_me = { version = "2.1.0", features = ["full"] }
 ```
 
 ### Feature Flags
@@ -242,7 +244,7 @@ In `no_std` environments, disable default features and provide a time source:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.0.1", default-features = false }
+snowflake_me = { version = "2.1.0", default-features = false }
 ```
 
 ```rust,ignore

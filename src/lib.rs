@@ -73,7 +73,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! snowflake-me = { version = "2.0.1", features = ["ip-fallback"] }
+//! snowflake_me = { version = "2.1.0", features = ["ip-fallback"] }
 //! ```
 //!
 //! ### 2. Basic Usage
@@ -206,7 +206,7 @@
 //!
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
 
-#![doc(html_root_url = "https://docs.rs/snowflake-me/*")]
+#![doc(html_root_url = "https://docs.rs/snowflake_me/2.1.0")]
 
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]
