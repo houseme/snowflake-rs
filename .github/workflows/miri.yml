@@ -35,7 +35,8 @@ jobs:
       - name: Run Miri
         # `--lib` keeps the run focused on the crate's unit tests and avoids
         # pulling dev-only test crates (criterion/proptest) that are not
-        # Miri-compatible.
-        run: cargo +nightly miri test --lib --all-features
+        # Miri-compatible. `ip-fallback` is excluded because its network
+        # interface discovery depends on OS FFI (`getifaddrs`) unsupported by Miri.
+        run: cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas"
         env:
           MIRIFLAGS: "-Zmiri-disable-isolation"
