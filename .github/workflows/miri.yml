@@ -36,6 +36,6 @@ jobs:
         # `--lib` keeps the run focused on the crate's unit tests and avoids
         # pulling dev-only test crates (criterion/proptest) that are not
         # Miri-compatible.
-        run: cargo miri test --lib --all-features
+        run: cargo +nightly miri test --lib --all-features
         env:
           MIRIFLAGS: "-Zmiri-disable-isolation"

@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added optimized batch ID generation for `Snowflake::next_ids(count)`, reserving contiguous sequence ranges per CAS operation while preserving cross-millisecond behavior.
 - Added `SnowflakeId::from_base32`, `SnowflakeId::from_base58`, and `SnowflakeId::from_base64` decoding helpers.
-- Added `Snowflake::compose` as the inverse of `decompose`, plus `Error::ComponentOutOfRange` for invalid component values.
+- Added `Snowflake::compose` as the inverse of `decompose`, with component range validation.
 - Added `Default` for `Snowflake` and `DecomposedSnowflake::absolute_millis(start_time)`.
 
 ### Changed

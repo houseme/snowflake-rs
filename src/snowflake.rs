@@ -14,6 +14,7 @@ use crate::time;
 use core::sync::atomic::{AtomicU64, Ordering};
 
 extern crate alloc;
+use alloc::format;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
@@ -394,8 +395,8 @@ impl Snowflake {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::ComponentOutOfRange`] if any component exceeds its
-    /// configured bit width.
+    /// Returns [`Error::ParseIdFailed`] if any component exceeds its configured
+    /// bit width.
     pub fn compose(
         &self,
         time: u64,
@@ -418,12 +419,9 @@ impl Snowflake {
             || machine_id > machine_max
             || sequence > sequence_max
         {
-            return Err(Error::ComponentOutOfRange {
-                time,
-                data_center_id,
-                machine_id,
-                sequence,
-            });
+            return Err(Error::ParseIdFailed(format!(
+                "component out of range for compose: time={time}, data_center_id={data_center_id}, machine_id={machine_id}, sequence={sequence}"
+            )));
         }
 
         let machine_shift = bit_len_sequence;
