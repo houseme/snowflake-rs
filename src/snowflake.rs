@@ -74,6 +74,26 @@ impl Snowflake {
         Self(shared)
     }
 
+    /// Atomically update the packed state via compare-and-swap.
+    ///
+    /// Uses `compare_exchange_weak` by default — it permits spurious failures,
+    /// which are safe inside a retry loop and yield better throughput under
+    /// contention (especially on ARM). Enable the `use-strong-cas` feature to
+    /// use the stronger `compare_exchange` instead.
+    fn cas(&self, current: u64, new: u64) -> bool {
+        if cfg!(feature = "use-strong-cas") {
+            self.0
+                .state
+                .compare_exchange(current, new, Ordering::AcqRel, Ordering::Relaxed)
+                .is_ok()
+        } else {
+            self.0
+                .state
+                .compare_exchange_weak(current, new, Ordering::AcqRel, Ordering::Relaxed)
+                .is_ok()
+        }
+    }
+
     /// Generate the next unique ID.
     ///
     /// This method is lock-free and thread-safe, using CAS operations for high concurrency.
@@ -140,27 +160,7 @@ impl Snowflake {
                             continue;
                         }
                         let new_state = (last_time << time_shift) | sequence;
-                        let cas_ok = if cfg!(feature = "use-strong-cas") {
-                            self.0
-                                .state
-                                .compare_exchange(
-                                    current_state,
-                                    new_state,
-                                    Ordering::AcqRel,
-                                    Ordering::Relaxed,
-                                )
-                                .is_ok()
-                        } else {
-                            self.0
-                                .state
-                                .compare_exchange_weak(
-                                    current_state,
-                                    new_state,
-                                    Ordering::AcqRel,
-                                    Ordering::Relaxed,
-                                )
-                                .is_ok()
-                        };
+                        let cas_ok = self.cas(current_state, new_state);
                         if cas_ok {
                             let id = (last_time
                                 << (self.0.bit_len_data_center_id
@@ -207,27 +207,7 @@ impl Snowflake {
             // Use CAS (Compare-And-Swap) to update status atomically
             // compare_exchange_weak performs better at high concurrency because it allows spurious failures,
             // which is safe in retry loops. compare_exchange is stronger but slightly slower.
-            let cas_ok = if cfg!(feature = "use-strong-cas") {
-                self.0
-                    .state
-                    .compare_exchange(
-                        current_state,
-                        new_state,
-                        Ordering::AcqRel,
-                        Ordering::Relaxed,
-                    )
-                    .is_ok()
-            } else {
-                self.0
-                    .state
-                    .compare_exchange_weak(
-                        current_state,
-                        new_state,
-                        Ordering::AcqRel,
-                        Ordering::Relaxed,
-                    )
-                    .is_ok()
-            };
+            let cas_ok = self.cas(current_state, new_state);
             if cas_ok {
                 let id = (next_time
                     << (self.0.bit_len_data_center_id
@@ -257,18 +237,137 @@ impl Snowflake {
 
     /// Generate multiple unique IDs in a single call.
     ///
-    /// More efficient than calling `next_id()` in a loop because
-    /// it amortizes overhead across the batch.
+    /// Allocates contiguous sequence numbers in batches within the CAS loop,
+    /// so generating `n` IDs typically needs far fewer atomic operations than
+    /// calling [`next_id`](Self::next_id) `n` times. Returned IDs are in
+    /// monotonically increasing order.
     ///
     /// # Errors
     ///
-    /// Returns an error if any individual ID generation fails
-    /// (e.g., [`Error::OverTimeLimit`] or clock drift errors).
+    /// Returns [`Error::OverTimeLimit`] if the timestamp exceeds the maximum
+    /// value representable by the configured time bit length, or a clock drift
+    /// error ([`Error::ClockDrift`] / [`Error::ClockDriftExceeded`]) depending
+    /// on the configured [`ClockDriftStrategy`].
     pub fn next_ids(&self, count: usize) -> Result<Vec<SnowflakeId>, Error> {
-        let mut ids = Vec::with_capacity(count);
-        for _ in 0..count {
-            ids.push(self.next_id()?);
+        if count == 0 {
+            return Ok(Vec::new());
         }
+
+        let sequence_mask = (1u64 << self.0.bit_len_sequence) - 1;
+        let time_shift = self.0.bit_len_sequence;
+        let time_max = (1u64 << self.0.bit_len_time) - 1;
+
+        // Pre-compute the bit offsets and fixed components used to assemble each ID.
+        let machine_shift = self.0.bit_len_sequence;
+        let data_center_shift = self.0.bit_len_machine_id + machine_shift;
+        let time_total_shift = self.0.bit_len_data_center_id + data_center_shift;
+        let data_center_bits = u64::from(self.0.data_center_id) << data_center_shift;
+        let machine_bits = u64::from(self.0.machine_id) << machine_shift;
+        let assemble = |time: u64, seq: u64| {
+            SnowflakeId::new((time << time_total_shift) | data_center_bits | machine_bits | seq)
+        };
+
+        let mut ids: Vec<SnowflakeId> = Vec::with_capacity(count);
+
+        while ids.len() < count {
+            let remaining = count - ids.len();
+            let current_state = self.0.state.load(Ordering::Relaxed);
+            let last_time = current_state >> time_shift;
+            let current_seq = current_state & sequence_mask;
+            let elapsed_time = current_elapsed_time(self.0.start_time) as u64;
+
+            // Clock drift detection: elapsed_time < last_time means the clock went backward.
+            if elapsed_time < last_time {
+                #[cfg(feature = "metrics")]
+                metrics::counter!("snowflake_clock_drift_events_total").increment(1);
+                #[cfg(feature = "tracing")]
+                tracing::warn!(
+                    last_time,
+                    current_time = elapsed_time,
+                    strategy = ?self.0.clock_drift_strategy,
+                    "clock drift detected"
+                );
+                match self.0.clock_drift_strategy {
+                    ClockDriftStrategy::Wait => {
+                        if let Some(max_drift) = self.0.max_clock_drift_ms {
+                            let drift = last_time - elapsed_time;
+                            if drift > max_drift as u64 {
+                                return Err(Error::ClockDriftExceeded {
+                                    drift_ms: drift,
+                                    max_ms: max_drift,
+                                });
+                            }
+                        }
+                        til_next_millis(self.0.start_time + last_time as i64);
+                        continue;
+                    }
+                    ClockDriftStrategy::Error => {
+                        return Err(Error::ClockDrift {
+                            last_time,
+                            current_time: elapsed_time,
+                        });
+                    }
+                    ClockDriftStrategy::LastTimestamp => {
+                        // Reuse last_time; reserve a contiguous run of sequence numbers.
+                        let next_seq = current_seq + 1;
+                        if next_seq > sequence_mask {
+                            til_next_millis(self.0.start_time + last_time as i64);
+                            continue;
+                        }
+                        let avail = sequence_mask - next_seq + 1;
+                        let reserved = (remaining as u64).min(avail);
+                        let new_state = (last_time << time_shift) | (next_seq + reserved - 1);
+                        if self.cas(current_state, new_state) {
+                            for seq in next_seq..next_seq + reserved {
+                                ids.push(assemble(last_time, seq));
+                            }
+                        }
+                        continue;
+                    }
+                }
+            }
+
+            let (next_time, next_seq, avail) = if elapsed_time == last_time {
+                let next_seq = current_seq + 1;
+                if next_seq > sequence_mask {
+                    // Sequence exhausted within this millisecond — wait for the next one.
+                    #[cfg(feature = "metrics")]
+                    metrics::counter!("snowflake_sequence_exhaustion_total").increment(1);
+                    #[cfg(feature = "tracing")]
+                    tracing::debug!("sequence exhausted, waiting for next millisecond");
+                    til_next_millis(self.0.start_time + last_time as i64);
+                    continue;
+                }
+                (last_time, next_seq, sequence_mask - next_seq + 1)
+            } else {
+                // New millisecond — sequence resets to 0.
+                (elapsed_time, 0, sequence_mask + 1)
+            };
+
+            if next_time > time_max {
+                #[cfg(feature = "tracing")]
+                tracing::error!(time = next_time, max = time_max, "time limit exceeded");
+                return Err(Error::OverTimeLimit);
+            }
+
+            let reserved = (remaining as u64).min(avail);
+            let new_state = (next_time << time_shift) | (next_seq + reserved - 1);
+            if self.cas(current_state, new_state) {
+                for seq in next_seq..next_seq + reserved {
+                    ids.push(assemble(next_time, seq));
+                }
+                #[cfg(feature = "metrics")]
+                {
+                    metrics::counter!("snowflake_ids_generated_total").increment(reserved);
+                    metrics::gauge!("snowflake_sequence_utilization")
+                        .set((next_seq + reserved - 1) as f64 / sequence_mask as f64);
+                }
+                #[cfg(feature = "tracing")]
+                tracing::trace!(time = next_time, count = reserved, "snowflake ids generated");
+            }
+            // CAS failure means another thread raced us; retry the loop.
+        }
+
         Ok(ids)
     }
 
@@ -282,6 +381,69 @@ impl Snowflake {
             self.0.bit_len_data_center_id,
             self.0.bit_len_machine_id,
         )
+    }
+
+    /// Compose a Snowflake ID from its components — the inverse of [`decompose`](Self::decompose).
+    ///
+    /// Uses this generator's bit-length configuration. Each component must fit
+    /// within its allotted bit width.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::ComponentOutOfRange`] if any component exceeds its
+    /// configured bit width.
+    pub fn compose(
+        &self,
+        time: u64,
+        data_center_id: u64,
+        machine_id: u64,
+        sequence: u64,
+    ) -> Result<SnowflakeId, Error> {
+        let bit_len_sequence = self.0.bit_len_sequence;
+        let bit_len_machine_id = self.0.bit_len_machine_id;
+        let bit_len_data_center_id = self.0.bit_len_data_center_id;
+        let bit_len_time = self.0.bit_len_time;
+
+        let sequence_max = (1u64 << bit_len_sequence) - 1;
+        let machine_max = (1u64 << bit_len_machine_id) - 1;
+        let data_center_max = (1u64 << bit_len_data_center_id) - 1;
+        let time_max = (1u64 << bit_len_time) - 1;
+
+        if time > time_max
+            || data_center_id > data_center_max
+            || machine_id > machine_max
+            || sequence > sequence_max
+        {
+            return Err(Error::ComponentOutOfRange {
+                time,
+                data_center_id,
+                machine_id,
+                sequence,
+            });
+        }
+
+        let machine_shift = bit_len_sequence;
+        let data_center_shift = bit_len_machine_id + machine_shift;
+        let time_shift = bit_len_data_center_id + data_center_shift;
+
+        let id = (time << time_shift)
+            | (data_center_id << data_center_shift)
+            | (machine_id << machine_shift)
+            | sequence;
+        Ok(SnowflakeId::new(id))
+    }
+}
+
+impl Default for Snowflake {
+    fn default() -> Self {
+        // Zero machine / data center IDs avoid any IP-fallback dependency, so
+        // finalization cannot fail. Production deployments should still set
+        // explicit IDs via the builder for uniqueness across hosts.
+        Builder::new()
+            .machine_id(&|| Ok(0))
+            .data_center_id(&|| Ok(0))
+            .finalize()
+            .expect("default Snowflake config (zero ids) cannot fail")
     }
 }
 
@@ -438,6 +600,15 @@ impl DecomposedSnowflake {
     #[must_use]
     pub fn elapsed_millis(&self) -> u64 {
         self.time
+    }
+
+    /// Returns the absolute Unix-millisecond timestamp of this ID.
+    ///
+    /// This is `start_time + elapsed_millis`, i.e. the wall-clock time at which
+    /// the ID was generated, given the generator's configured `start_time`.
+    #[must_use]
+    pub fn absolute_millis(&self, start_time: i64) -> i64 {
+        start_time + (self.time as i64)
     }
 }
 

@@ -92,4 +92,20 @@ pub enum Error {
         "invalid bit length configuration: time({0}) + sequence({1}) + data_center({2}) + machine({3}) must be 63"
     )]
     InvalidBitLength(u8, u8, u8, u8),
+
+    /// One of the components supplied to [`Snowflake::compose`](crate::Snowflake::compose)
+    /// exceeds the bit width allotted to it in the generator's configuration.
+    #[error(
+        "component out of range for compose: time={time}, data_center={data_center_id}, machine={machine_id}, sequence={sequence}"
+    )]
+    ComponentOutOfRange {
+        /// Elapsed-milliseconds component.
+        time: u64,
+        /// Data center ID component.
+        data_center_id: u64,
+        /// Machine ID component.
+        machine_id: u64,
+        /// Sequence component.
+        sequence: u64,
+    },
 }

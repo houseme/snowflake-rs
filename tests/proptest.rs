@@ -75,5 +75,39 @@ mod std_tests {
             let final_count = ids.lock().unwrap().len();
             prop_assert_eq!(final_count, num_threads * ids_per_thread);
         }
+
+        #[test]
+        fn next_ids_uniqueness_under_contention(
+            num_threads in 2..8usize,
+            batch_size in 50..500usize,
+        ) {
+            let sf = Arc::new(
+                Snowflake::builder()
+                    .machine_id(&|| Ok(1))
+                    .data_center_id(&|| Ok(1))
+                    .finalize()
+                    .unwrap(),
+            );
+            let ids = Arc::new(Mutex::new(HashSet::new()));
+            let mut handles = vec![];
+
+            for _ in 0..num_threads {
+                let sf = Arc::clone(&sf);
+                let ids = Arc::clone(&ids);
+                handles.push(thread::spawn(move || {
+                    let batch = sf.next_ids(batch_size).unwrap();
+                    let mut lock = ids.lock().unwrap();
+                    for id in batch {
+                        assert!(lock.insert(id), "duplicate id: {id}");
+                    }
+                }));
+            }
+
+            for h in handles {
+                h.join().unwrap();
+            }
+            let final_count = ids.lock().unwrap().len();
+            prop_assert_eq!(final_count, num_threads * batch_size);
+        }
     }
 }

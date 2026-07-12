@@ -6,6 +6,8 @@
 [![Docs.rs](https://docs.rs/snowflake_me/badge.svg)](https://docs.rs/snowflake_me)
 [![Build Status](https://github.com/houseme/snowflake-rs/workflows/Build/badge.svg)](https://github.com/houseme/snowflake-rs/actions?query=workflow%3ABuild)
 [![License](https://img.shields.io/crates/l/snowflake_me)](LICENSE-APACHE)
+[![Miri](https://github.com/houseme/snowflake-rs/actions/workflows/miri.yml/badge.svg)](https://github.com/houseme/snowflake-rs/actions/workflows/miri.yml)
+[![Semver](https://github.com/houseme/snowflake-rs/actions/workflows/semver.yml/badge.svg)](https://github.com/houseme/snowflake-rs/actions/workflows/semver.yml)
 
 一个高性能、高并发、分布式的 Rust Snowflake ID 生成器实现。
 

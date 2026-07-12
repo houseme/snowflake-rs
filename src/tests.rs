@@ -594,6 +594,61 @@ fn test_next_ids_concurrent() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
+#[test]
+fn test_next_ids_monotonic() -> Result<(), BoxDynError> {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(7))
+        .data_center_id(&|| Ok(3))
+        .finalize()?;
+
+    let ids = sf.next_ids(1000)?;
+    assert_eq!(ids.len(), 1000);
+    // Batched IDs are returned in strictly increasing order, both within a
+    // millisecond (sequence advances) and across the millisecond boundary.
+    for w in ids.windows(2) {
+        assert!(w[1] > w[0], "batch IDs must be strictly increasing");
+    }
+    Ok(())
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn test_next_ids_spans_millis() -> Result<(), BoxDynError> {
+    // Default bit_len_sequence = 12 -> sequence range is 0..=4095 per millisecond.
+    // Requesting 10_000 IDs forces the batch across multiple millisecond
+    // boundaries, exercising the multi-segment allocation path.
+    let expected_machine = 11u64;
+    let expected_dc = 13u64;
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(expected_machine as u16))
+        .data_center_id(&|| Ok(expected_dc as u16))
+        .finalize()?;
+
+    let count = 10_000;
+    let ids = sf.next_ids(count)?;
+    assert_eq!(ids.len(), count);
+
+    // All unique, even across the millisecond boundary.
+    let set: HashSet<_> = ids.iter().collect();
+    assert_eq!(set.len(), count, "duplicate IDs across millisecond boundary");
+
+    // Strictly increasing across segments.
+    for w in ids.windows(2) {
+        assert!(w[1] > w[0], "IDs not monotonic across boundary");
+    }
+
+    // Every ID decomposes back to the configured machine / data center id,
+    // proving the batched assembly uses the same layout as `next_id`.
+    for id in &ids {
+        let parts = sf.decompose(*id);
+        assert_eq!(parts.machine_id, expected_machine);
+        assert_eq!(parts.data_center_id, expected_dc);
+    }
+
+    Ok(())
+}
+
 #[test]
 fn test_cache_line_alignment() {
     use crate::snowflake::SharedSnowflake;
@@ -701,4 +756,98 @@ fn test_snowflake_id_core_traits() {
 
     let id3 = SnowflakeId::new(99999);
     assert!(id < id3);
+}
+
+// --- Encoding decode roundtrip + API enhancement tests (v2.1.3) ---
+
+#[test]
+fn test_snowflake_id_encoding_roundtrip() {
+    // base32 / base58 / base64 encode -> decode must be the identity.
+    for raw in [0_u64, 1, 255, 4095, 1_000_000, u64::MAX / 2, u64::MAX] {
+        let id = SnowflakeId::new(raw);
+        assert_eq!(
+            SnowflakeId::from_base64(&id.base64()).unwrap(),
+            id,
+            "base64 roundtrip for {raw}"
+        );
+        assert_eq!(
+            SnowflakeId::from_base58(&id.base58()).unwrap(),
+            id,
+            "base58 roundtrip for {raw}"
+        );
+        assert_eq!(
+            SnowflakeId::from_base32(&id.base32()).unwrap(),
+            id,
+            "base32 roundtrip for {raw}"
+        );
+    }
+}
+
+#[test]
+fn test_snowflake_id_decode_invalid() {
+    // Characters outside each alphabet are rejected.
+    assert!(SnowflakeId::from_base32("!!invalid!!").is_err());
+    // 0, O, I, l are deliberately excluded from the base58 alphabet.
+    assert!(SnowflakeId::from_base58("0OIl").is_err());
+    assert!(SnowflakeId::from_base64("not-base64@@@").is_err());
+    // base64 that does not decode to exactly 8 bytes is rejected.
+    assert!(SnowflakeId::from_base64("AAAA").is_err());
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn test_compose_decompose_roundtrip() -> Result<(), BoxDynError> {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(7))
+        .data_center_id(&|| Ok(3))
+        .finalize()?;
+
+    let (time, dc, machine, seq) = (123_u64, 3, 7, 999);
+    let id = sf.compose(time, dc, machine, seq)?;
+    let parts = sf.decompose(id);
+    assert_eq!(parts.time, time);
+    assert_eq!(parts.data_center_id, dc);
+    assert_eq!(parts.machine_id, machine);
+    assert_eq!(parts.sequence, seq);
+
+    // Components outside their bit width are rejected.
+    assert!(sf.compose(1_u64 << 41, 0, 0, 0).is_err()); // time overflow (default 41 bits)
+    assert!(sf.compose(0, 1 << 5, 0, 0).is_err()); // data center overflow (default 5 bits)
+    assert!(sf.compose(0, 0, 0, 1 << 12).is_err()); // sequence overflow (default 12 bits)
+    Ok(())
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn test_snowflake_default() -> Result<(), BoxDynError> {
+    // Default uses zero machine / data center IDs (no IP fallback dependency).
+    let sf = Snowflake::default();
+    let id = sf.next_id()?;
+    assert!(id.as_u64() > 0);
+    let parts = sf.decompose(id);
+    assert_eq!(parts.machine_id, 0);
+    assert_eq!(parts.data_center_id, 0);
+    Ok(())
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn test_absolute_millis() -> Result<(), BoxDynError> {
+    let start = crate::time::current_millis();
+    let sf = Snowflake::builder()
+        .start_time(start)
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()?;
+    let id = sf.next_id()?;
+    let parts = sf.decompose(id);
+    let abs = parts.absolute_millis(start);
+    // absolute_millis == start + elapsed, so it must fall within [start, now].
+    let now = crate::time::current_millis();
+    assert!(
+        abs >= start && abs <= now + 100,
+        "absolute_millis={abs}, start={start}, now={now}"
+    );
+    assert_eq!(abs, start + parts.time as i64);
+    Ok(())
 }

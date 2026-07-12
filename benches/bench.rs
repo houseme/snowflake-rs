@@ -148,12 +148,39 @@ fn bench_builder_finalize(c: &mut Criterion) {
     });
 }
 
+fn bench_next_ids(c: &mut Criterion) {
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(1))
+        .data_center_id(&|| Ok(1))
+        .finalize()
+        .unwrap();
+
+    let mut group = c.benchmark_group("next_ids");
+    for count in [100_usize, 1000, 10_000] {
+        group.throughput(Throughput::Elements(count as u64));
+        // Batched API: reserves a contiguous run of sequence numbers per CAS.
+        group.bench_with_input(BenchmarkId::new("batch", count), &count, |b, &count| {
+            b.iter(|| sf.next_ids(count));
+        });
+        // Baseline: an equivalent loop of single next_id() calls.
+        group.bench_with_input(BenchmarkId::new("loop", count), &count, |b, &count| {
+            b.iter(|| {
+                for _ in 0..count {
+                    let _ = sf.next_id();
+                }
+            });
+        });
+    }
+    group.finish();
+}
+
 criterion_group!(
     snowflake_perf,
     bench_new,
     bench_next_id_single,
     bench_next_id_concurrent,
     bench_next_id_cas_strategy,
+    bench_next_ids,
     bench_decompose,
     bench_encodings,
     bench_builder_finalize
