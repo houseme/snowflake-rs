@@ -37,6 +37,10 @@ jobs:
         # pulling dev-only test crates (criterion/proptest) that are not
         # Miri-compatible. `ip-fallback` is excluded because its network
         # interface discovery depends on OS FFI (`getifaddrs`) unsupported by Miri.
-        run: cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas"
+        run: |
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_snowflake_id_encoding_roundtrip
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_compose_decompose_roundtrip
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_next_ids_monotonic
+          cargo +nightly miri test --lib --features "std serde tracing metrics use-strong-cas" test_snowflake_default
         env:
           MIRIFLAGS: "-Zmiri-disable-isolation"
