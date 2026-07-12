@@ -363,7 +363,11 @@ impl Snowflake {
                         .set((next_seq + reserved - 1) as f64 / sequence_mask as f64);
                 }
                 #[cfg(feature = "tracing")]
-                tracing::trace!(time = next_time, count = reserved, "snowflake ids generated");
+                tracing::trace!(
+                    time = next_time,
+                    count = reserved,
+                    "snowflake ids generated"
+                );
             }
             // CAS failure means another thread raced us; retry the loop.
         }

@@ -631,7 +631,11 @@ fn test_next_ids_spans_millis() -> Result<(), BoxDynError> {
 
     // All unique, even across the millisecond boundary.
     let set: HashSet<_> = ids.iter().collect();
-    assert_eq!(set.len(), count, "duplicate IDs across millisecond boundary");
+    assert_eq!(
+        set.len(),
+        count,
+        "duplicate IDs across millisecond boundary"
+    );
 
     // Strictly increasing across segments.
     for w in ids.windows(2) {
