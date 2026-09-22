@@ -21,8 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - uses: actions/cache@v6
+        uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -41,8 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - uses: actions/cache@v6
+        uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -69,8 +69,8 @@ jobs:
             rust: beta
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - uses: actions/cache@v6
+        uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -95,8 +95,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - uses: actions/cache@v6
+        uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -115,8 +115,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - uses: actions/cache@v6
+        uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -135,8 +135,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - uses: actions/cache@v6
+        uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -155,8 +155,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
-      - uses: actions/cache@v6
+        uses: actions/checkout@v7.0.1
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
@@ -184,7 +184,7 @@ jobs:
       - wasm_check
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
       - name: Run cargo publish
