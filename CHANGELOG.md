@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Document generator sharing, node-ID coordination, restart timestamp reuse, and IP truncation collisions; clarify sequence capacity, clock waiting, reusable batches, feature contracts, and supported targets in both READMEs.
 - Use persistent benchmark workers, assert generation success, separate default sequence capacity from high-capacity CPU cost, and compare allocating/reusable batches against matching single-ID loops.
 - Document benchmark measurement boundaries and cover varied-value encoders and decoders.
 - Declare and check Rust 1.88 as the library MSRV; keep development tests and benchmarks on current toolchains.
