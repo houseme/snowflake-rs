@@ -18,7 +18,7 @@ pub(crate) type BoxDynError = Box<dyn core::error::Error + 'static + Send + Sync
 /// The error type for this crate.
 #[derive(Error, Debug)]
 pub enum Error {
-    /// The configured start time is in the future relative to the system clock.
+    /// The configured start time is in the future relative to the clock source.
     ///
     /// Only raised when the `std` feature is enabled and a start time (milliseconds
     /// since the Unix epoch) is provided to [`Builder::start_time`](crate::Builder::start_time).
@@ -48,6 +48,21 @@ pub enum Error {
     /// field can represent (e.g., ~69 years with the default 41-bit time field).
     #[error("over the time limit")]
     OverTimeLimit,
+
+    /// The clock is before the configured epoch and cannot produce an ID under
+    /// the selected clock drift strategy.
+    #[error("clock timestamp {timestamp} is before start_time {start_time}")]
+    BeforeEpoch {
+        /// The clock reading in milliseconds since the Unix epoch.
+        timestamp: i64,
+        /// The configured epoch in milliseconds since the Unix epoch.
+        start_time: i64,
+    },
+
+    /// Waiting for the clock exceeded the configured timeout.
+    #[cfg(feature = "std")]
+    #[error("timed out waiting for the clock to advance")]
+    WaitTimeout,
 
     /// No private IPv4 or IPv6 address was found on any network interface.
     ///
@@ -84,12 +99,17 @@ pub enum Error {
         max_ms: i64,
     },
 
-    /// The sum of all bit lengths does not equal 63.
+    /// The configured maximum clock drift is negative.
+    #[error("maximum clock drift must be nonnegative, got {0}ms")]
+    InvalidClockDrift(i64),
+
+    /// The bit lengths do not sum to 63 or a node ID exceeds its 16-bit width.
     ///
     /// The four configurable sections (time, sequence, data center ID, machine ID)
     /// must sum to exactly 63 bits to fit within a `u64` with the sign bit unset.
+    /// The data center and machine sections must each fit within a `u16`.
     #[error(
-        "invalid bit length configuration: time({0}) + sequence({1}) + data_center({2}) + machine({3}) must be 63"
+        "invalid bit length configuration: time({0}) + sequence({1}) + data_center({2}) + machine({3}) must be 63, and each node ID section must be at most 16 bits"
     )]
     InvalidBitLength(u8, u8, u8, u8),
 }

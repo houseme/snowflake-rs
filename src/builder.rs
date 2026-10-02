@@ -10,10 +10,10 @@ use crate::Snowflake;
 use crate::clock::ClockDriftStrategy;
 use crate::error::{BoxDynError, Error};
 use crate::snowflake::SharedSnowflake;
-use core::sync::atomic::AtomicU64;
+use crate::sync::{Arc, AtomicU64};
 
 extern crate alloc;
-use alloc::sync::Arc;
+use alloc::format;
 
 #[cfg(feature = "std")]
 use crate::time::current_millis;
@@ -33,6 +33,9 @@ pub struct Builder<'a> {
     bit_len_machine_id: u8,
     clock_drift_strategy: ClockDriftStrategy,
     max_clock_drift_ms: Option<i64>,
+    clock_source: Option<alloc::sync::Arc<dyn Fn() -> i64 + Send + Sync>>,
+    #[cfg(feature = "std")]
+    wait_timeout: Option<std::time::Duration>,
 }
 
 impl Default for Builder<'_> {
@@ -57,17 +60,49 @@ impl<'a> Builder<'a> {
             bit_len_machine_id: 5,
             clock_drift_strategy: ClockDriftStrategy::default(),
             max_clock_drift_ms: None,
+            clock_source: None,
+            #[cfg(feature = "std")]
+            wait_timeout: None,
         }
     }
 
     /// Set the start time in milliseconds since the Unix epoch.
     ///
     /// When the `std` feature is enabled, [`Builder::finalize`] fails with
-    /// [`Error::StartTimeAheadOfCurrentTime`](crate::Error::StartTimeAheadOfCurrentTime)
-    /// if this value is later than the current system time.
+    /// `Error::StartTimeAheadOfCurrentTime`
+    /// if this value is later than the current clock source time.
     #[must_use]
     pub fn start_time(mut self, start_time: i64) -> Self {
         self.start_time = Some(start_time);
+        self
+    }
+
+    /// Use a custom clock returning milliseconds since the Unix epoch.
+    ///
+    /// The clock is shared by all clones of the generator and must be safe to
+    /// call concurrently. This can provide a platform clock without `std` or a
+    /// deterministic clock for testing. Backward changes are handled according
+    /// to the configured [`ClockDriftStrategy`].
+    #[must_use]
+    pub fn clock_source<F>(mut self, clock_source: F) -> Self
+    where
+        F: Fn() -> i64 + Send + Sync + 'static,
+    {
+        self.clock_source = Some(alloc::sync::Arc::new(clock_source));
+        self
+    }
+
+    /// Limit the time a generation call may spend waiting for the clock.
+    ///
+    /// The timeout starts on the first wait and covers all subsequent waits
+    /// within that call, including batch generation. It uses a monotonic clock
+    /// and returns [`Error::WaitTimeout`] if time does not advance in time.
+    /// Without a timeout, waiting is unbounded unless the clock drift limit is
+    /// exceeded. A zero timeout allows no waiting.
+    #[cfg(feature = "std")]
+    #[must_use]
+    pub fn wait_timeout(mut self, timeout: std::time::Duration) -> Self {
+        self.wait_timeout = Some(timeout);
         self
     }
 
@@ -124,14 +159,14 @@ impl<'a> Builder<'a> {
         self
     }
 
-    /// Set the bit length of the data center ID section.
+    /// Set the bit length of the data center ID section (0 through 16).
     #[must_use]
     pub fn bit_len_data_center_id(mut self, bit_len_data_center_id: u8) -> Self {
         self.bit_len_data_center_id = bit_len_data_center_id;
         self
     }
 
-    /// Set the bit length of the machine ID section.
+    /// Set the bit length of the machine ID section (0 through 16).
     #[must_use]
     pub fn bit_len_machine_id(mut self, bit_len_machine_id: u8) -> Self {
         self.bit_len_machine_id = bit_len_machine_id;
@@ -152,6 +187,7 @@ impl<'a> Builder<'a> {
     /// When using [`ClockDriftStrategy::Wait`], if the drift exceeds this limit,
     /// [`Error::ClockDriftExceeded`] is returned instead of waiting indefinitely.
     /// Only effective with the `Wait` strategy.
+    /// Negative values are rejected by [`Builder::finalize`].
     #[must_use]
     pub fn max_clock_drift_ms(mut self, ms: i64) -> Self {
         self.max_clock_drift_ms = Some(ms);
@@ -162,11 +198,13 @@ impl<'a> Builder<'a> {
     ///
     /// Returns an error if validation fails or any configured closure returns an error.
     pub fn finalize(self) -> Result<Snowflake, Error> {
-        if self.bit_len_time
-            + self.bit_len_sequence
-            + self.bit_len_data_center_id
-            + self.bit_len_machine_id
-            != 63
+        let total_bits = u16::from(self.bit_len_time)
+            + u16::from(self.bit_len_sequence)
+            + u16::from(self.bit_len_data_center_id)
+            + u16::from(self.bit_len_machine_id);
+        if total_bits != 63
+            || self.bit_len_data_center_id > u16::BITS as u8
+            || self.bit_len_machine_id > u16::BITS as u8
         {
             return Err(Error::InvalidBitLength(
                 self.bit_len_time,
@@ -176,21 +214,33 @@ impl<'a> Builder<'a> {
             ));
         }
 
-        let start_time = if let Some(start_time) = self.start_time {
-            #[cfg(feature = "std")]
-            if start_time > current_millis() {
-                return Err(Error::StartTimeAheadOfCurrentTime(start_time));
-            }
-            start_time
-        } else {
-            // Default start time: 2022-01-01 00:00:00 UTC in milliseconds since the Unix epoch.
-            1_640_995_200_000
-        };
+        if let Some(max_ms) = self.max_clock_drift_ms
+            && max_ms < 0
+        {
+            return Err(Error::InvalidClockDrift(max_ms));
+        }
+
+        #[cfg(feature = "std")]
+        if let Some(start_time) = self.start_time
+            && start_time
+                > self
+                    .clock_source
+                    .as_ref()
+                    .map_or_else(current_millis, |clock| clock())
+        {
+            return Err(Error::StartTimeAheadOfCurrentTime(start_time));
+        }
+        // Default epoch: 2022-01-01 00:00:00 UTC, in Unix milliseconds.
+        let start_time = self.start_time.unwrap_or(1_640_995_200_000);
 
         #[cfg(feature = "ip-fallback")]
-        let ip_derived_ids = get_ids_from_ip();
+        let ip_derived_ids = if self.machine_id.is_none() || self.data_center_id.is_none() {
+            get_ids_from_ip()
+        } else {
+            None
+        };
 
-        let machine_id_mask = (1 << self.bit_len_machine_id) - 1;
+        let machine_id_mask = ((1u64 << self.bit_len_machine_id) - 1) as u16;
         let machine_id = if let Some(machine_id_fn) = self.machine_id {
             machine_id_fn().map_err(Error::MachineIdFailed)?
         } else {
@@ -223,7 +273,7 @@ impl<'a> Builder<'a> {
             return Err(Error::CheckMachineIdFailed);
         }
 
-        let data_center_id_mask = (1 << self.bit_len_data_center_id) - 1;
+        let data_center_id_mask = ((1u64 << self.bit_len_data_center_id) - 1) as u16;
         let data_center_id = if let Some(data_center_id_fn) = self.data_center_id {
             data_center_id_fn().map_err(Error::DataCenterIdFailed)?
         } else {
@@ -256,7 +306,7 @@ impl<'a> Builder<'a> {
         }
 
         let shared = Arc::new(SharedSnowflake {
-            state: AtomicU64::new(0),
+            state: AtomicU64::new(u64::MAX),
             start_time,
             machine_id,
             data_center_id,
@@ -266,6 +316,9 @@ impl<'a> Builder<'a> {
             bit_len_machine_id: self.bit_len_machine_id,
             clock_drift_strategy: self.clock_drift_strategy,
             max_clock_drift_ms: self.max_clock_drift_ms,
+            clock_source: self.clock_source,
+            #[cfg(feature = "std")]
+            wait_timeout: self.wait_timeout,
         });
 
         #[cfg(feature = "tracing")]

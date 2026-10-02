@@ -24,7 +24,8 @@ use core::sync::atomic::{AtomicI64, Ordering};
 
 /// Global time source for no_std environments.
 ///
-/// Must be set via [`set_time_source`] before generating IDs.
+/// Must be set via [`set_time_source`] before generating IDs unless a
+/// per-generator clock is supplied with [`crate::Builder::clock_source`].
 #[cfg(not(feature = "std"))]
 static NO_STD_TIME_SOURCE: AtomicI64 = AtomicI64::new(0);
 

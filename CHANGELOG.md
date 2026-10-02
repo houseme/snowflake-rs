@@ -9,12 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Validate bit-length sums without u8 overflow, support full 16-bit node identifiers, reject wider node fields and negative drift limits, and skip IP discovery when node IDs are explicit.
+- Handle signed epoch extremes without overflow and recheck rollback policies and drift limits throughout sequence-exhaustion waits; return a time-limit error when the final timestamp is exhausted.
+- Allow the first reservation to use timestamp zero and sequence zero, including layouts without sequence bits.
+- Record LastTimestamp successes and exhaustion consistently across single and batch calls, and keep zero-width sequence utilization finite.
 - Reject empty Base32/Base58 inputs and reject noncanonical or oversized Base64 IDs before decoding.
 
 ### Changed
 
+- Share the reservation path between single and batch generation, reuse the state returned by failed CAS, and yield after bounded spinning in std builds without weakening atomic ordering.
 - Encode Base32, Base36, and Base58 through fixed stack buffers; use precomputed decoding tables and fixed-size Base64 output buffers while preserving existing wire alphabets and valid leading-zero inputs.
 - Allow string ID serializers to format directly and deserialize borrowed strings, with whole-u64 property tests and expanded decoder fuzz coverage.
+
+### Added
+
+- Add per-generator `Builder::clock_source` callbacks shared by clones and optional `std` `Builder::wait_timeout` budgets across a generation call.
+- Model the actual shared atomic state with Loom, including single, batch, mixed, and advancing-clock reservations.
+
+### Breaking Changes
+
+- The public `Error` enum adds `InvalidClockDrift`, `BeforeEpoch`, and (with `std`) `WaitTimeout`; downstream exhaustive matches must handle these variants. Existing valid ID layouts and encoding alphabets remain unchanged.
 
 ## [2.1.1] - 2026-07-13
 

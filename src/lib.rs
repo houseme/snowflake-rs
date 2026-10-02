@@ -221,9 +221,10 @@ mod error;
 /// The [`SnowflakeId`] newtype with encoding methods and trait implementations.
 pub mod id;
 mod snowflake;
+mod sync;
 pub(crate) mod time;
 
-#[cfg(test)]
+#[cfg(all(test, not(loom)))]
 mod tests;
 
 pub use builder::Builder;

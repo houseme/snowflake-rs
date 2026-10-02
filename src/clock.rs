@@ -13,11 +13,13 @@
 /// between monotonicity guarantees and availability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ClockDriftStrategy {
-    /// Busy-wait until the clock catches up. Guarantees strict monotonicity.
+    /// Wait until the clock catches up, preserving increasing reservations.
     ///
     /// This is the default strategy. If `max_clock_drift_ms` is configured and
     /// the drift exceeds that limit, `Error::ClockDriftExceeded` is returned
-    /// instead of waiting indefinitely.
+    /// instead of waiting indefinitely. The limit is checked again on every
+    /// clock read, including when waiting for exhausted sequences. With `std`,
+    /// waiting yields after a bounded spin and can have an optional timeout.
     #[default]
     Wait,
     /// Return `Error::ClockDrift` immediately on backward clock drift.
@@ -27,8 +29,11 @@ pub enum ClockDriftStrategy {
     Error,
     /// Reuse the last known timestamp when the clock moves backward.
     ///
-    /// IDs remain globally unique (the sequence number still advances),
+    /// IDs from this generator and its clones remain unique (the sequence advances),
     /// but the time-to-ID mapping becomes approximate. Useful when
-    /// availability is more important than exact timestamp accuracy.
+    /// availability is more important than exact timestamp accuracy. Exhausted
+    /// sequences still wait for a later timestamp. Before the first ID, a clock
+    /// earlier than the epoch returns `Error::BeforeEpoch` because no previous
+    /// timestamp exists to reuse.
     LastTimestamp,
 }
