@@ -65,21 +65,21 @@ Add this library to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-snowflake_me = "2.1.1"
+snowflake_me = "2.2.0"
 ```
 
 To enable the IP address fallback feature:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.1", features = ["ip-fallback"] }
+snowflake_me = { version = "2.2.0", features = ["ip-fallback"] }
 ```
 
 To enable all optional features at once:
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.1", features = ["full"] }
+snowflake_me = { version = "2.2.0", features = ["full"] }
 ```
 
 ### Feature Flags
@@ -276,7 +276,7 @@ In `no_std` environments, disable default features and provide a time source. An
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.1", default-features = false }
+snowflake_me = { version = "2.2.0", default-features = false }
 ```
 
 ```rust,ignore
@@ -294,6 +294,25 @@ let sf = Snowflake::builder()
 
 let id = sf.next_id().unwrap();
 ```
+
+## Upgrading to 2.2.0
+
+The default ID layout and existing encoding alphabets are unchanged. Review these
+compatibility changes when upgrading from 2.1.x:
+
+- Exhaustive matches on `Error` must handle `InvalidClockDrift`, `BeforeEpoch`,
+  and, with `std`, `WaitTimeout`.
+- `tracing` and `metrics` now enable `std`. Applications that previously combined
+  these features with `set_time_source` should inject their clock through
+  `Builder::clock_source` instead. Embedded builds can use the core library and
+  `serde` without `std`.
+- Empty Base32/Base58 inputs and invalid bit layouts are rejected. At the exact
+  epoch, the first ID can use sequence zero, including zero-width sequence layouts.
+
+New APIs include `Builder::clock_source`, `Builder::wait_timeout` (with `std`),
+and `Snowflake::next_ids_into` for reusable buffers. See the [2.2.0 changelog](CHANGELOG.md#220---2026-10-02)
+for the complete changes and [benchmark methodology](docs/BENCHMARKS.md) for
+interpreting performance results.
 
 ## Migration from v0.6.x
 

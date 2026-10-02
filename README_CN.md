@@ -65,21 +65,21 @@ ID 分配采用 **无锁 CAS 循环**。序列耗尽或时钟回退时，调用�
 
 ```toml
 [dependencies]
-snowflake_me = "2.1.1"
+snowflake_me = "2.2.0"
 ```
 
 启用 IP 地址自动回退功能：
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.1", features = ["ip-fallback"] }
+snowflake_me = { version = "2.2.0", features = ["ip-fallback"] }
 ```
 
 一次性启用所有可选特性：
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.1", features = ["full"] }
+snowflake_me = { version = "2.2.0", features = ["full"] }
 ```
 
 ### 特性标志
@@ -275,7 +275,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```toml
 [dependencies]
-snowflake_me = { version = "2.1.1", default-features = false }
+snowflake_me = { version = "2.2.0", default-features = false }
 ```
 
 ```rust,ignore
@@ -293,6 +293,16 @@ let sf = Snowflake::builder()
 
 let id = sf.next_id().unwrap();
 ```
+
+## 升级到 2.2.0
+
+默认 ID 布局和现有编码字母表保持不变。从 2.1.x 升级时，请检查以下兼容性变化：
+
+- 对 `Error` 的穷尽匹配需要处理 `InvalidClockDrift`、`BeforeEpoch`，以及 `std` 下的 `WaitTimeout`。
+- `tracing` 和 `metrics` 现在会启用 `std`。此前将这些特性与 `set_time_source` 一起使用的应用，应改用 `Builder::clock_source` 注入时钟。嵌入式构建仍可在无 `std` 环境下使用核心库和 `serde`。
+- 空 Base32/Base58 输入和非法位布局会被拒绝。恰好位于 epoch 时，首个 ID 可以使用序列零，包括序列位宽为零的布局。
+
+新增 API 包括 `Builder::clock_source`、`Builder::wait_timeout`（需要 `std`），以及复用缓冲区的 `Snowflake::next_ids_into`。完整变更见 [2.2.0 changelog](CHANGELOG.md#220---2026-10-02)，性能结果的解释方式见[基准测试方法](docs/BENCHMARKS.md)。
 
 ## 从 v0.6.x 迁移
 

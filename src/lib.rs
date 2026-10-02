@@ -82,7 +82,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! snowflake_me = { version = "2.1.1", features = ["ip-fallback"] }
+//! snowflake_me = { version = "2.2.0", features = ["ip-fallback"] }
 //! ```
 //!
 //! ### 2. Basic Usage
@@ -219,7 +219,7 @@
 //!
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
 
-#![doc(html_root_url = "https://docs.rs/snowflake_me/2.1.1")]
+#![doc(html_root_url = "https://docs.rs/snowflake_me/2.2.0")]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;

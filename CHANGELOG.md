@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-02
+
 ### Fixed
 
 - Enable real `no_std + alloc` compilation, including Serde, and validate it on a bare-metal target with native 64-bit atomics.
@@ -302,6 +304,8 @@ See `docs/chrono-to-jiff-migration.md` for the full feasibility analysis and rat
 
 This is the initial version.
 
+[Unreleased]: https://github.com/houseme/snowflake-rs/compare/2.2.0...HEAD
+[2.2.0]: https://github.com/houseme/snowflake-rs/releases/tag/2.2.0
 [2.1.1]: https://github.com/houseme/snowflake-rs/releases/tag/2.1.1
 [2.1.0]: https://github.com/houseme/snowflake-rs/releases/tag/2.1.0
 [2.0.1]: https://github.com/houseme/snowflake-rs/releases/tag/2.0.1
