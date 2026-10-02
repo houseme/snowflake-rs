@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Enable real `no_std + alloc` compilation, including Serde, and validate it on a bare-metal target with native 64-bit atomics.
+- Select CI toolchains explicitly so MSRV and beta/nightly jobs use their declared compiler instead of the repository stable override.
 - Validate bit-length sums without u8 overflow, support full 16-bit node identifiers, reject wider node fields and negative drift limits, and skip IP discovery when node IDs are explicit.
 - Handle signed epoch extremes without overflow and recheck rollback policies and drift limits throughout sequence-exhaustion waits; return a time-limit error when the final timestamp is exhausted.
 - Allow the first reservation to use timestamp zero and sequence zero, including layouts without sequence bits.
@@ -17,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Declare and check Rust 1.88 as the library MSRV; keep development tests and benchmarks on current toolchains.
+- Run strong/weak CAS Loom models, no_std Serde tests, strict no_std rustdoc, and release-mode boundary regressions in CI; make publishing wait for model, MSRV, and documentation checks.
+- Use explicit successful generators for the ignored manual benchmarks and limit those host-clock benchmarks to std builds.
 - Share the reservation path between single and batch generation, reuse the state returned by failed CAS, and yield after bounded spinning in std builds without weakening atomic ordering.
 - Encode Base32, Base36, and Base58 through fixed stack buffers; use precomputed decoding tables and fixed-size Base64 output buffers while preserving existing wire alphabets and valid leading-zero inputs.
 - Allow string ID serializers to format directly and deserialize borrowed strings, with whole-u64 property tests and expanded decoder fuzz coverage.
@@ -29,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+- The `tracing` and `metrics` features now explicitly enable `std`. For embedded builds use the core or Serde feature set; applications combining these observability features with `set_time_source` should migrate to `Builder::clock_source`.
 - The public `Error` enum adds `InvalidClockDrift`, `BeforeEpoch`, and (with `std`) `WaitTimeout`; downstream exhaustive matches must handle these variants. Existing valid ID layouts and encoding alphabets remain unchanged.
 
 ## [2.1.1] - 2026-07-13

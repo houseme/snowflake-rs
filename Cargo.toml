@@ -11,14 +11,15 @@ readme = "README.md"
 keywords = ["snowflake", "random", "id", "generator", "uniqueness"]
 categories = ["development-tools", "data-structures", "algorithms"]
 edition = "2024"
+rust-version = "1.88"
 
 [features]
 default = ["std"]
 std = ["dep:jiff", "jiff/std", "thiserror/std"]
 ip-fallback = ["std", "dep:pnet_datalink"]
 serde = ["dep:serde"]
-tracing = ["dep:tracing"]
-metrics = ["dep:metrics"]
+tracing = ["std", "dep:tracing"]
+metrics = ["std", "dep:metrics"]
 use-strong-cas = []
 full = ["std", "serde", "tracing", "metrics", "ip-fallback"]
 
@@ -27,7 +28,7 @@ jiff = { version = "0.2.37", default-features = false, optional = true }
 thiserror = { version = "2.0.20", default-features = false }
 pnet_datalink = { version = "0.35.0", default-features = false, optional = true }
 base64 = { version = "0.23.1", default-features = false, features = ["alloc"] }
-serde = { version = "1", features = ["derive"], optional = true }
+serde = { version = "1", default-features = false, features = ["alloc", "derive"], optional = true }
 tracing = { version = "0.1", optional = true }
 metrics = { version = "0.24", optional = true }
 

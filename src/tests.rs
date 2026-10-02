@@ -6,9 +6,19 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use alloc::string::ToString;
+#[cfg(feature = "std")]
+use alloc::{boxed::Box, vec::Vec};
+use std::format;
+#[cfg(feature = "std")]
+use std::{println, vec};
+
 #[cfg(feature = "std")]
 use crate::ClockDriftStrategy;
-use crate::{SnowflakeId, error::*, snowflake::Snowflake};
+#[cfg(any(feature = "std", feature = "serde"))]
+use crate::snowflake::Snowflake;
+use crate::{SnowflakeId, error::*};
+use std::thread;
 #[cfg(feature = "std")]
 use std::time::Duration;
 #[cfg(feature = "std")]
@@ -16,7 +26,8 @@ use std::{
     collections::HashSet,
     sync::{Mutex, atomic::Ordering},
 };
-use std::{sync::Arc, thread, time::Instant};
+#[cfg(feature = "std")]
+use std::{sync::Arc, time::Instant};
 #[cfg(feature = "std")]
 use thiserror::Error;
 
@@ -374,6 +385,8 @@ fn test_serde_snowflake_id_string_roundtrip() {
 #[test]
 fn test_serde_decomposed_snowflake() {
     let sf = Snowflake::builder()
+        .start_time(0)
+        .clock_source(|| 1)
         .machine_id(&|| Ok(1))
         .data_center_id(&|| Ok(1))
         .finalize()
@@ -667,10 +680,11 @@ fn test_cache_line_alignment() {
 // --- Performance Benchmarks ---
 // These tests are ignored by default. Run with `cargo test -- --ignored`.
 
+#[cfg(feature = "std")]
 #[test]
 #[ignore = "benchmark, run with `cargo test -- --ignored`"]
 fn bench_single_thread_performance() -> Result<(), BoxDynError> {
-    let sf = Snowflake::new()?;
+    let sf = Snowflake::default();
     let iterations = 1_000_000;
 
     let start = Instant::now();
@@ -692,10 +706,11 @@ fn bench_single_thread_performance() -> Result<(), BoxDynError> {
     Ok(())
 }
 
+#[cfg(feature = "std")]
 #[test]
 #[ignore = "benchmark, run with `cargo test -- --ignored`"]
 fn bench_multi_thread_throughput() -> Result<(), BoxDynError> {
-    let sf = Arc::new(Snowflake::new()?);
+    let sf = Arc::new(Snowflake::default());
     let num_threads = num_cpus::get().max(2); // Use available cores, at least 2
     let ids_per_thread = 1_000_000 / num_threads;
     let total_ids = num_threads * ids_per_thread;

@@ -8,7 +8,8 @@
 
 //! A high-performance, highly concurrent, distributed Snowflake ID generator.
 //!
-//! This implementation is **lock-free**, designed for maximum throughput and minimum latency on multi-core CPUs.
+//! This implementation uses atomic state reservation for concurrent ID generation.
+//! Calls may wait for the clock when a timestamp exhausts its sequence capacity.
 //!
 //! ## Highlights
 //!
@@ -17,8 +18,8 @@
 //! - **Highly Customizable**: The `Builder` pattern allows you to flexibly configure the start time, machine ID, data center ID, and the bit lengths of each component.
 //! - **Smart IP Fallback**: With the `ip-fallback` feature enabled, if `machine_id` or `data_center_id` are not provided, the system automatically derives them from local network interfaces.
 //!     - **Supports both IPv4 and IPv6**: It prioritizes private IPv4 addresses and falls back to private IPv6 addresses.
-//!     - **Conflict-Free**: To ensure uniqueness, `machine_id` and `data_center_id` are derived from distinct parts of the IP address.
-//! - **`no_std` Support**: Works in `no_std` + `alloc` environments with a user-provided time source.
+//!     - **Best-effort defaults**: IP-derived identifiers can collide after truncation to the configured bit widths. Assign node identifiers explicitly when uniqueness across nodes is required.
+//! - **`no_std` Support**: Works in `no_std` + `alloc` environments with a user-provided time source on targets supporting 64-bit atomics.
 //!
 //! ## Architecture
 //!
@@ -37,21 +38,29 @@
 //! - **Machine ID** (5 bits): Identifies the machine within the data center (0–31).
 //! - **Sequence** (12 bits): Per-millisecond counter (0–4095).
 //!
-//! The bit lengths are fully configurable via [`Builder`], as long as they sum to 63.
+//! Bit lengths must sum to 63; the machine and data center sections each support
+//! 0 through 16 bits. Zero-width sections require a zero identifier.
 //!
 //! ## Performance
 //!
-//! The generator uses a lock-free CAS (Compare-And-Swap) loop with cache-line aligned state
-//! (`#[repr(align(64))]`) to prevent false sharing between threads. Under contention, it
-//! defaults to `compare_exchange_weak` which allows spurious failures for better throughput
-//! on ARM and other architectures. Enable the `use-strong-cas` feature to use
-//! `compare_exchange` instead.
+//! The generator uses a CAS (Compare-And-Swap) loop with aligned state
+//! (`#[repr(align(64))]`). Threads still contend on the shared atomic state.
+//! It defaults to `compare_exchange_weak`, which permits spurious failures and
+//! retries them. Enable `use-strong-cas` to use `compare_exchange`; compare the
+//! performance of both modes on your target hardware. The default sequence
+//! capacity is 4096 IDs per millisecond for each node pair.
 //!
 //! ## Thread Safety
 //!
 //! [`Snowflake`] is safe to `Clone` and share across threads. Cloning is a cheap `Arc`
 //! increment — all clones share the same internal state. The [`next_id`](Snowflake::next_id)
-//! method is lock-free and safe to call concurrently from any number of threads.
+//! method is safe to call concurrently from any number of threads. State reservation
+//! uses atomic operations; clock recovery and sequence exhaustion can make calls wait.
+//!
+//! Use one generator (or its clones) per `(data_center_id, machine_id)` pair.
+//! Independently constructed generators do not share state, including instances made
+//! with `Snowflake::default()`, and can produce duplicates with matching identifiers.
+//! After restarting a node, do not reuse timestamps already issued by that node.
 //!
 //! ## Feature Flags
 //!
@@ -60,10 +69,10 @@
 //! | `std` | jiff, thiserror/std | Yes | Standard library support (time via jiff) |
 //! | `ip-fallback` | std, pnet_datalink | No | Auto-derive IDs from local IP address |
 //! | `serde` | serde | No | Serde serialization for `SnowflakeId` and `DecomposedSnowflake` |
-//! | `tracing` | tracing | No | Structured logging at key points |
-//! | `metrics` | metrics | No | Runtime counters and gauges |
+//! | `tracing` | std, tracing | No | Structured logging at key points |
+//! | `metrics` | std, metrics | No | Runtime counters and gauges |
 //! | `use-strong-cas` | — | No | Use `compare_exchange` instead of `compare_exchange_weak` |
-//! | `full` | all of the above | No | Enable all optional features |
+//! | `full` | std, serde, tracing, metrics, ip-fallback | No | Enable integrations; retain weak CAS |
 //!
 //! ## Quick Start
 //!
@@ -189,7 +198,11 @@
 //!
 //! ## `no_std` Usage
 //!
-//! In `no_std` environments, disable default features and provide a time source:
+//! In `no_std` environments, disable default features and provide a time source.
+//! The target must support 64-bit atomics and provide an allocator. The `serde`
+//! feature also works without `std`; `ip-fallback`, `tracing`, and `metrics` enable
+//! `std`. A per-generator clock can be installed with [`Builder::clock_source`],
+//! or the process-wide source can be advanced using `set_time_source`:
 //!
 //! ```rust,ignore
 //! // In your timer interrupt or main loop:
@@ -207,8 +220,11 @@
 //! [Twitter's Snowflake]: https://blog.twitter.com/2010/announcing-snowflake
 
 #![doc(html_root_url = "https://docs.rs/snowflake_me/2.1.1")]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
+#[cfg(test)]
+extern crate std;
 
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]

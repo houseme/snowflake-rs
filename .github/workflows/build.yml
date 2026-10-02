@@ -83,12 +83,17 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - name: Run cargo test (all features)
         if: runner.os != 'Windows'
-        run: cargo test --all-features
+        run: cargo +${{ matrix.rust }} test --all-features
       - name: Run cargo test (all features except ip-fallback)
         if: runner.os == 'Windows'
-        run: cargo test --features "std serde tracing metrics use-strong-cas"
+        run: cargo +${{ matrix.rust }} test --features "std serde tracing metrics use-strong-cas"
       - name: Run cargo test (no default features)
-        run: cargo test --no-default-features
+        run: cargo +${{ matrix.rust }} test --no-default-features
+      - name: Run cargo test (no_std with serde)
+        run: cargo +${{ matrix.rust }} test --no-default-features --features serde
+      - name: Check release-mode boundary regressions
+        if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        run: cargo +stable test --release --test builder_boundaries --test clock_test --test encoding_test
 
   no_std_check:
     name: no_std build check
@@ -105,10 +110,16 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Check no_std build
-        run: cargo check --no-default-features
+        with:
+          targets: aarch64-unknown-none
+      - name: Check no_std library on a bare-metal target
+        run: cargo check --locked --lib --no-default-features --target aarch64-unknown-none
+      - name: Check no_std library with serde on a bare-metal target
+        run: cargo check --locked --lib --no-default-features --features serde --target aarch64-unknown-none
       - name: Check no_std doc
         run: cargo doc --no-default-features --no-deps
+        env:
+          RUSTDOCFLAGS: "-D warnings"
 
   wasm_check:
     name: WASM build check
@@ -146,9 +157,36 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "stable"
-      - name: Check with MSRV
-        run: cargo check --all-features
+          toolchain: "1.88.0"
+      - name: Check default library with MSRV
+        run: cargo +1.88.0 check --locked --lib
+      - name: Check all library features with MSRV
+        run: cargo +1.88.0 check --locked --lib --all-features
+      - name: Check no_std library with MSRV
+        run: cargo +1.88.0 check --locked --lib --no-default-features
+      - name: Check no_std library with serde and MSRV
+        run: cargo +1.88.0 check --locked --lib --no-default-features --features serde
+
+  loom_check:
+    name: Loom reservation model (${{ matrix.cas }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cas: [weak, strong]
+    env:
+      RUSTFLAGS: "--cfg loom"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Model weak CAS reservations
+        if: matrix.cas == 'weak'
+        run: cargo test --locked --test loom_test
+      - name: Model strong CAS reservations
+        if: matrix.cas == 'strong'
+        run: cargo test --locked --features use-strong-cas --test loom_test
 
   doc_check:
     name: Documentation check
@@ -182,6 +220,9 @@ jobs:
       - test
       - no_std_check
       - wasm_check
+      - msrv_check
+      - loom_check
+      - doc_check
     steps:
       - name: Checkout code
         uses: actions/checkout@v7.0.1
