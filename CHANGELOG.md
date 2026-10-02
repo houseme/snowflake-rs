@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Use persistent benchmark workers, assert generation success, separate default sequence capacity from high-capacity CPU cost, and compare allocating/reusable batches against matching single-ID loops.
+- Document benchmark measurement boundaries and cover varied-value encoders and decoders.
 - Declare and check Rust 1.88 as the library MSRV; keep development tests and benchmarks on current toolchains.
 - Run strong/weak CAS Loom models, no_std Serde tests, strict no_std rustdoc, and release-mode boundary regressions in CI; make publishing wait for model, MSRV, and documentation checks.
 - Use explicit successful generators for the ignored manual benchmarks and limit those host-clock benchmarks to std builds.

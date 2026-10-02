@@ -11,6 +11,7 @@ Cargo.lock
 
 doc/doc.md
 docs/*
+!docs/BENCHMARKS.md
 fuzz/target/
 
 # IDE configs (JetBrains)
