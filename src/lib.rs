@@ -208,6 +208,8 @@
 
 #![doc(html_root_url = "https://docs.rs/snowflake_me/2.1.1")]
 
+extern crate alloc;
+
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]
 pub struct ReadmeDoctests;

@@ -1,10 +1,15 @@
 #![no_main]
 use libfuzzer_sys::fuzz_target;
-use snowflake_me::DecomposedSnowflake;
+use snowflake_me::{DecomposedSnowflake, SnowflakeId};
 
 fuzz_target!(|data: &[u8]| {
     if data.len() >= 8 {
         let id = u64::from_be_bytes(data[..8].try_into().unwrap());
+        let typed = SnowflakeId::new(id);
+        assert_eq!(SnowflakeId::from_base32(&typed.base32()).unwrap(), typed);
+        assert_eq!(SnowflakeId::from_base58(&typed.base58()).unwrap(), typed);
+        assert_eq!(SnowflakeId::from_base64(&typed.base64()).unwrap(), typed);
+        assert_eq!(u64::from_str_radix(&typed.base36(), 36).unwrap(), id);
         let id = id & ((1u64 << 63) - 1);
         let d = DecomposedSnowflake::decompose(id, 41, 12, 5, 5);
         let _ = d.hex();

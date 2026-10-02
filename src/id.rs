@@ -6,6 +6,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use base64::Engine;
 use base64::engine::general_purpose;
 use core::fmt;
@@ -13,6 +16,22 @@ use core::ops::Deref;
 use core::str::FromStr;
 
 use crate::error::Error;
+
+const BASE32_ALPHABET: &[u8; 32] = b"ybndrfg8ejkmcpqxot1uwisza345h769";
+const BASE36_ALPHABET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
+const BASE58_ALPHABET: &[u8; 58] = b"123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+const BASE32_LOOKUP: [u8; 256] = decode_lookup(BASE32_ALPHABET);
+const BASE58_LOOKUP: [u8; 256] = decode_lookup(BASE58_ALPHABET);
+
+const fn decode_lookup(alphabet: &[u8]) -> [u8; 256] {
+    let mut lookup = [u8::MAX; 256];
+    let mut index = 0;
+    while index < alphabet.len() {
+        lookup[alphabet[index] as usize] = index as u8;
+        index += 1;
+    }
+    lookup
+}
 
 /// A typed Snowflake ID wrapping a `u64`.
 ///
@@ -49,67 +68,37 @@ impl SnowflakeId {
     /// Returns the base32 encoded string using a custom alphabet.
     #[must_use]
     pub fn base32(&self) -> String {
-        const ENCODE_BASE32_MAP: &str = "ybndrfg8ejkmcpqxot1uwisza345h769";
-        let mut id = self.0;
-        if id < 32 {
-            return ENCODE_BASE32_MAP
-                .chars()
-                .nth(id as usize)
-                .unwrap()
-                .to_string();
-        }
-
-        let mut b = Vec::new();
-        while id >= 32 {
-            b.push(ENCODE_BASE32_MAP.chars().nth((id % 32) as usize).unwrap());
-            id /= 32;
-        }
-        b.push(ENCODE_BASE32_MAP.chars().nth(id as usize).unwrap());
-
-        b.reverse();
-        b.into_iter().collect()
+        self.encode_positional(BASE32_ALPHABET)
     }
 
     /// Returns the base36 encoded string (digits + lowercase letters).
     #[must_use]
     pub fn base36(&self) -> String {
-        const CHARSET: &[u8; 36] = b"0123456789abcdefghijklmnopqrstuvwxyz";
-        let mut id = self.0;
-        if id == 0 {
-            return "0".to_string();
-        }
-        let mut buf = Vec::new();
-        while id > 0 {
-            buf.push(CHARSET[(id % 36) as usize]);
-            id /= 36;
-        }
-        buf.reverse();
-        String::from_utf8(buf).expect("base36 charset is valid UTF-8")
+        self.encode_positional(BASE36_ALPHABET)
     }
 
     /// Returns the base58 encoded string.
     #[must_use]
     pub fn base58(&self) -> String {
-        const ENCODE_BASE58_MAP: &str =
-            "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+        self.encode_positional(BASE58_ALPHABET)
+    }
+
+    fn encode_positional<const N: usize>(&self, alphabet: &[u8; N]) -> String {
+        // Thirteen digits suffice for every u64 in each of the supported bases (32, 36, 58).
+        let mut buffer = [0u8; 13];
+        let mut start = buffer.len();
         let mut id = self.0;
-        if id < 58 {
-            return ENCODE_BASE58_MAP
-                .chars()
-                .nth(id as usize)
-                .unwrap()
-                .to_string();
+        loop {
+            start -= 1;
+            buffer[start] = alphabet[(id % N as u64) as usize];
+            id /= N as u64;
+            if id == 0 {
+                break;
+            }
         }
 
-        let mut b = Vec::new();
-        while id >= 58 {
-            b.push(ENCODE_BASE58_MAP.chars().nth((id % 58) as usize).unwrap());
-            id /= 58;
-        }
-        b.push(ENCODE_BASE58_MAP.chars().nth(id as usize).unwrap());
-
-        b.reverse();
-        b.into_iter().collect()
+        // The fixed alphabets are ASCII, so this borrows the stack buffer before one allocation.
+        String::from_utf8_lossy(&buffer[start..]).into_owned()
     }
 
     /// Returns the base64 encoded string of the raw 8-byte ID.
@@ -125,48 +114,49 @@ impl SnowflakeId {
     /// Returns [`Error::ParseIdFailed`] if the input is not valid standard base64
     /// or does not decode to exactly 8 bytes.
     pub fn from_base64(s: &str) -> Result<Self, Error> {
-        let bytes = general_purpose::STANDARD
-            .decode(s)
+        // Eight bytes always occupy twelve characters in padded standard base64.
+        if s.len() != 12 {
+            return Err(Error::ParseIdFailed(
+                "base64 ID must contain exactly 12 characters".into(),
+            ));
+        }
+        let mut bytes = [0u8; 8];
+        let decoded_len = general_purpose::STANDARD
+            .decode_slice(s, &mut bytes)
             .map_err(|e| Error::ParseIdFailed(e.to_string()))?;
-        if bytes.len() != 8 {
+        if decoded_len != bytes.len() {
             return Err(Error::ParseIdFailed(format!(
-                "base64 input decoded to {} bytes, expected 8",
-                bytes.len()
+                "base64 input decoded to {decoded_len} bytes, expected 8"
             )));
         }
-        let raw = u64::from_be_bytes(bytes.try_into().expect("length checked to be 8"));
-        Ok(Self(raw))
+        Ok(Self(u64::from_be_bytes(bytes)))
     }
 
     /// Decode a [`base32`](Self::base32)-encoded string back into a `SnowflakeId`.
     ///
     /// # Errors
     ///
-    /// Returns [`Error::ParseIdFailed`] if the input contains characters outside
+    /// Returns [`Error::ParseIdFailed`] if the input is empty, contains characters outside
     /// the base32 alphabet or the value overflows `u64`.
     pub fn from_base32(s: &str) -> Result<Self, Error> {
-        const MAP: &[u8; 32] = b"ybndrfg8ejkmcpqxot1uwisza345h769";
-        Self::from_positional(s, MAP)
+        Self::from_positional(s, &BASE32_LOOKUP, 32)
     }
 
     /// Decode a [`base58`](Self::base58)-encoded string back into a `SnowflakeId`.
     ///
     /// # Errors
     ///
-    /// Returns [`Error::ParseIdFailed`] if the input contains characters outside
+    /// Returns [`Error::ParseIdFailed`] if the input is empty, contains characters outside
     /// the base58 alphabet or the value overflows `u64`.
     pub fn from_base58(s: &str) -> Result<Self, Error> {
-        const MAP: &[u8; 58] = b"123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
-        Self::from_positional(s, MAP)
+        Self::from_positional(s, &BASE58_LOOKUP, 58)
     }
 
     /// Shared positional-notation decoder for the custom-alphabet encodings.
-    fn from_positional<const N: usize>(s: &str, map: &[u8; N]) -> Result<Self, Error> {
-        let mut lookup = [255u8; 256];
-        for (i, &byte) in map.iter().enumerate() {
-            lookup[byte as usize] = i as u8;
+    fn from_positional(s: &str, lookup: &[u8; 256], base: u64) -> Result<Self, Error> {
+        if s.is_empty() {
+            return Err(Error::ParseIdFailed("encoded ID must not be empty".into()));
         }
-        let base = N as u64;
         let mut result = 0u64;
         for byte in s.bytes() {
             let value = lookup[byte as usize];
@@ -338,16 +328,34 @@ pub struct SnowflakeIdString(pub SnowflakeId);
 #[cfg(feature = "serde")]
 impl serde::Serialize for SnowflakeIdString {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.0.to_string())
+        serializer.collect_str(&self.0)
     }
 }
 
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for SnowflakeIdString {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let s = String::deserialize(deserializer)?;
-        let id: SnowflakeId = s.parse().map_err(serde::de::Error::custom)?;
-        Ok(SnowflakeIdString(id))
+        struct IdStringVisitor;
+
+        impl serde::de::Visitor<'_> for IdStringVisitor {
+            type Value = SnowflakeIdString;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a decimal or hexadecimal Snowflake ID string")
+            }
+
+            fn visit_str<E: serde::de::Error>(self, value: &str) -> Result<Self::Value, E> {
+                value.parse().map(SnowflakeIdString).map_err(E::custom)
+            }
+
+            fn visit_bytes<E: serde::de::Error>(self, value: &[u8]) -> Result<Self::Value, E> {
+                let value = core::str::from_utf8(value)
+                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Bytes(value), &self))?;
+                self.visit_str(value)
+            }
+        }
+
+        deserializer.deserialize_str(IdStringVisitor)
     }
 }
 

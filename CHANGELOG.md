@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject empty Base32/Base58 inputs and reject noncanonical or oversized Base64 IDs before decoding.
+
+### Changed
+
+- Encode Base32, Base36, and Base58 through fixed stack buffers; use precomputed decoding tables and fixed-size Base64 output buffers while preserving existing wire alphabets and valid leading-zero inputs.
+- Allow string ID serializers to format directly and deserialize borrowed strings, with whole-u64 property tests and expanded decoder fuzz coverage.
+
 ## [2.1.1] - 2026-07-13
 
 ### Fixed
