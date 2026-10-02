@@ -283,3 +283,53 @@ fn positive_wait_timeout_expires_while_the_clock_stays_stalled() {
     waiting_since.set(Instant::now()).unwrap();
     assert!(matches!(sf.next_id(), Err(Error::WaitTimeout)));
 }
+
+#[cfg(feature = "std")]
+#[test]
+fn batch_wait_timeout_budget_is_shared_after_a_chunk_completes() {
+    use std::time::Duration;
+
+    let stage = Arc::new(AtomicUsize::new(0));
+    let clock_stage = stage.clone();
+    let sf = Snowflake::builder()
+        .machine_id(&|| Ok(0))
+        .data_center_id(&|| Ok(0))
+        .start_time(0)
+        .clock_source(move || match clock_stage.load(Ordering::SeqCst) {
+            0 => 100,
+            1 => {
+                // The first batch read finds an exhausted sequence and starts
+                // the call's wait budget.
+                clock_stage.store(2, Ordering::SeqCst);
+                100
+            }
+            2 => {
+                // Timeouts are cooperative: the generator cannot interrupt a
+                // user callback. This chunk may complete after the deadline;
+                // the next reservation must retain the expired wait budget.
+                std::thread::sleep(Duration::from_millis(75));
+                clock_stage.store(3, Ordering::SeqCst);
+                101
+            }
+            _ => 102,
+        })
+        .bit_len_time(53)
+        .bit_len_sequence(0)
+        .wait_timeout(Duration::from_millis(50))
+        .finalize()
+        .unwrap();
+    sf.next_id().unwrap();
+    stage.store(1, Ordering::SeqCst);
+    let mut output = Vec::new();
+    assert!(matches!(
+        sf.next_ids_into(2, &mut output),
+        Err(Error::WaitTimeout)
+    ));
+    // A long scheduler pause or a spurious weak-CAS failure can make the call
+    // time out before publishing this chunk. It must never issue both chunks:
+    // resetting the budget per reservation would incorrectly allow that.
+    assert!(output.len() <= 1);
+    if let Some(id) = output.first() {
+        assert_eq!(sf.decompose(*id).time, 101);
+    }
+}

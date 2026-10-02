@@ -118,19 +118,52 @@ impl Snowflake {
     /// Generate multiple unique IDs in a single call.
     ///
     /// Reserves contiguous sequences with one CAS per chunk. Returned IDs are
-    /// monotonically increasing, but another thread can reserve between chunks.
+    /// monotonically increasing, but another thread can reserve IDs between
+    /// chunks. For repeated batches, [`Self::next_ids_into`] reuses a buffer.
     ///
     /// # Errors
     ///
-    /// Returns the same errors as [`Self::next_id`]. Previously reserved IDs are
-    /// consumed and discarded if a later chunk fails.
+    /// Returns the same clock and time-limit errors as [`Self::next_id`]. On
+    /// error, previously reserved IDs are consumed and discarded. Use
+    /// [`Self::next_ids_into`] to retain a successfully generated prefix.
     pub fn next_ids(&self, count: usize) -> Result<Vec<SnowflakeId>, Error> {
         let mut ids = Vec::with_capacity(count);
-        self.append_ids(count, &mut ids)?;
+        self.next_ids_into(count, &mut ids)?;
         Ok(ids)
     }
 
-    fn append_ids(&self, count: usize, output: &mut Vec<SnowflakeId>) -> Result<(), Error> {
+    /// Append `count` unique IDs to a reusable output buffer.
+    ///
+    /// Existing entries are preserved. Clear the buffer before calling when
+    /// only the new batch is needed. No allocation is required if the buffer
+    /// has room for `count` additional IDs. Each appended batch is strictly
+    /// increasing; existing entries need not belong to this generator.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same errors as [`Self::next_id`]. If a later chunk fails,
+    /// IDs already appended remain valid and reserved; they are never rolled
+    /// back or issued again. Compare the buffer length before and after the
+    /// call to find the number generated. A configured wait timeout is shared
+    /// across all chunks and starts when this call first needs to wait.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use snowflake_me::Snowflake;
+    /// let generator = Snowflake::builder()
+    ///     .machine_id(&|| Ok(1))
+    ///     .data_center_id(&|| Ok(1))
+    ///     .start_time(0)
+    ///     .clock_source(|| 1_000)
+    ///     .finalize()?;
+    /// let mut ids = Vec::with_capacity(100);
+    /// generator.next_ids_into(100, &mut ids)?;
+    /// ids.clear();
+    /// generator.next_ids_into(100, &mut ids)?;
+    /// # Ok::<(), snowflake_me::Error>(())
+    /// ```
+    pub fn next_ids_into(&self, count: usize, output: &mut Vec<SnowflakeId>) -> Result<(), Error> {
         // Reserve before claiming sequences, so allocation cannot fail between
         // claiming a chunk and appending its IDs.
         output.reserve(count);

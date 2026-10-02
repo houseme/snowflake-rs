@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `Snowflake::next_ids_into(count, &mut Vec<SnowflakeId>)` to reuse caller capacity. Successfully appended IDs remain valid on partial failure; all chunks share the same wait budget.
 - Add per-generator `Builder::clock_source` callbacks shared by clones and optional `std` `Builder::wait_timeout` budgets across a generation call.
 - Model the actual shared atomic state with Loom, including single, batch, mixed, and advancing-clock reservations.
 
